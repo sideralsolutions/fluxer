@@ -6,6 +6,7 @@ import * as SoundCommands from '@app/features/ui/commands/SoundCommands';
 import {isVoiceMeshRoom} from '@app/features/voice/engine/mesh/VoiceMeshRoom';
 import ScreenShareCodecNegotiation from '@app/features/voice/engine/ScreenShareCodecNegotiation';
 import ScreenSharePublicationMigration from '@app/features/voice/engine/ScreenSharePublicationMigration';
+import Soundboard from '@app/features/voice/engine/Soundboard';
 import {getEffectiveAudioState} from '@app/features/voice/engine/VoiceEffectiveAudioState';
 import {noteLocalVoiceActivity} from '@app/features/voice/engine/VoiceIdleActivityBridge';
 import {voiceMediaGraphStore} from '@app/features/voice/engine/VoiceMediaGraphStore';
@@ -239,11 +240,13 @@ export function bindRoomEvents(
 		screenShareNegotiationBound = true;
 		bindCodecNegotiation();
 		bindScreenShareMigration();
+		Soundboard.bind(room);
 	};
 	const unbindScreenShareNegotiation = (): void => {
 		screenShareNegotiationBound = false;
 		unbindCodecNegotiation();
 		unbindScreenShareMigration();
+		Soundboard.dispose();
 	};
 	const monitorDecodeHealth = (track: RemoteTrack, pub: RemoteTrackPublication): void => {
 		if (pub.source !== Track.Source.ScreenShare || pub.kind !== Track.Kind.Video) return;

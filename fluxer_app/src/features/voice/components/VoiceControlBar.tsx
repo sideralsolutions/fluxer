@@ -8,6 +8,7 @@ import {SoundType} from '@app/features/notification/utils/SoundUtils';
 import Permission from '@app/features/permissions/state/Permission';
 import NativePermission from '@app/features/permissions/system/state/NativePermission';
 import {Logger} from '@app/features/platform/utils/AppLogger';
+import {ComponentBus} from '@app/features/platform/utils/ComponentBus';
 import {MenuGroup} from '@app/features/ui/action_menu/MenuGroup';
 import {MenuItem} from '@app/features/ui/action_menu/MenuItem';
 import * as ContextMenuCommands from '@app/features/ui/commands/ContextMenuCommands';
@@ -33,6 +34,7 @@ import {
 	openScreenSharePickerModal,
 	preloadScreenSharePickerSources,
 } from '@app/features/voice/components/modals/ScreenSharePickerModal';
+import {SOUNDBOARD_DESCRIPTOR, SoundboardMenu} from '@app/features/voice/components/SoundboardMenu';
 import {getStreamKey} from '@app/features/voice/components/StreamKeys';
 import {StreamSettingsMenuContent} from '@app/features/voice/components/StreamSettingsMenuContent';
 import styles from '@app/features/voice/components/VoiceControlBar.module.css';
@@ -101,6 +103,7 @@ import {
 	MicrophoneIcon,
 	MicrophoneSlashIcon,
 	MonitorPlayIcon,
+	MusicNotesIcon,
 	PhoneXIcon,
 	SpeakerHighIcon,
 	SpeakerSlashIcon,
@@ -468,6 +471,21 @@ const VoiceControlBarInner = observer(function VoiceControlBarInner() {
 		},
 		[isMobile, openAnchoredMenu, renderInputSettingsMenu],
 	);
+	const soundboardButtonRef = useRef<HTMLButtonElement>(null);
+	const renderSoundboardMenu = useCallback(
+		({onClose}: {onClose: () => void}) => (
+			<SoundboardMenu onClose={onClose} data-flx="voice.voice-control-bar.render-soundboard-menu.soundboard-menu" />
+		),
+		[],
+	);
+	const handleSoundboardClick = useCallback(
+		(event: React.MouseEvent<HTMLButtonElement>) => openAnchoredMenu(event, renderSoundboardMenu),
+		[openAnchoredMenu, renderSoundboardMenu],
+	);
+	useEffect(() => {
+		if (!isConnected) return;
+		return ComponentBus.subscribe('SOUNDBOARD_TOGGLE', () => soundboardButtonRef.current?.click());
+	}, [isConnected]);
 	const handleOutputSettingsClick = useCallback(
 		(event: React.MouseEvent<HTMLButtonElement>) => {
 			if (isMobile) {
@@ -781,6 +799,41 @@ const VoiceControlBarInner = observer(function VoiceControlBarInner() {
 					</FocusRing>
 				</Tooltip>
 			</div>
+			{isConnected && (
+				<div
+					className={styles.buttonContainer}
+					data-flx="voice.voice-control-bar.voice-control-bar-inner.button-container.soundboard"
+				>
+					<Tooltip
+						text={() => (
+							<TooltipWithKeybind
+								label={i18n._(SOUNDBOARD_DESCRIPTOR)}
+								action="voice_toggle_soundboard"
+								data-flx="voice.voice-control-bar.voice-control-bar-inner.tooltip-with-keybind.soundboard"
+							/>
+						)}
+						data-flx="voice.voice-control-bar.voice-control-bar-inner.tooltip.soundboard"
+					>
+						<FocusRing offset={-2} data-flx="voice.voice-control-bar.voice-control-bar-inner.focus-ring.soundboard">
+							<button
+								ref={soundboardButtonRef}
+								type="button"
+								className={clsx(styles.button, styles.buttonUnmuted)}
+								onClick={handleSoundboardClick}
+								aria-label={i18n._(SOUNDBOARD_DESCRIPTOR)}
+								aria-haspopup="menu"
+								data-flx="voice.voice-control-bar.voice-control-bar-inner.button.soundboard"
+							>
+								<MusicNotesIcon
+									weight="fill"
+									className={styles.icon}
+									data-flx="voice.voice-control-bar.voice-control-bar-inner.icon.soundboard"
+								/>
+							</button>
+						</FocusRing>
+					</Tooltip>
+				</div>
+			)}
 			<div
 				className={styles.buttonContainer}
 				data-flx="voice.voice-control-bar.voice-control-bar-inner.button-container--2"

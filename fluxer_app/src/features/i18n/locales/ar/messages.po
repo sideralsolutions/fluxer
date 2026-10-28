@@ -21417,6 +21417,11 @@ msgstr "جارٍ تحميل اشتراكات الإشعارات…"
 msgid "Loading reactions"
 msgstr "جارٍ تحميل التفاعلات"
 
+#. Disabled soundboard menu item shown while the sound library loads.
+#: src/features/voice/components/SoundboardMenu.tsx
+msgid "Loading sounds…"
+msgstr "Loading sounds…"
+
 #: src/features/user/components/modals/tabs/component_gallery_tab/ComponentGalleryTabButtonsTab.tsx
 msgid "Loading states"
 msgstr "حالات التحميل"
@@ -21757,6 +21762,11 @@ msgstr "إدارة رموز الهدايا وروابط الهدايا التي 
 #: src/features/permissions/utils/PermissionLabelDescriptors.ts
 msgid "Manage roles"
 msgstr "إدارة الأدوار"
+
+#. Soundboard menu item that opens voice settings, where sounds are uploaded.
+#: src/features/voice/components/SoundboardMenu.tsx
+msgid "Manage sounds"
+msgstr "Manage sounds"
 
 #. Billing action that opens subscription management or the customer billing portal.
 #. Plutonium page hero button that scrolls to the subscription management panel.
@@ -24650,6 +24660,11 @@ msgstr "لم يتم تعيين اختصار"
 msgid "No shortcuts match that search."
 msgstr "لا توجد اختصارات مطابقة لهذا البحث."
 
+#. Disabled soundboard menu item shown when the user has not uploaded any sound.
+#: src/features/voice/components/SoundboardMenu.tsx
+msgid "No sounds yet"
+msgstr "No sounds yet"
+
 #: src/features/auth/components/pages/oauth_authorize_page/OAuthScopesStep.tsx
 msgid "No specific scopes requested."
 msgstr "لم تُطلب نطاقات صلاحيات محددة."
@@ -24900,6 +24915,11 @@ msgstr "غير معيّن"
 #: src/features/premium/components/plutonium_page/PlutoniumPageMessages.ts
 msgid "Not available"
 msgstr "غير متاح"
+
+#. Hint on soundboard sounds when the current voice call is peer-to-peer and cannot carry soundboard plays.
+#: src/features/voice/components/SoundboardMenu.tsx
+msgid "Not available in peer-to-peer calls"
+msgstr "Not available in peer-to-peer calls"
 
 #: src/features/guild/components/modals/guild_tabs/GuildDiscoveryTab.tsx
 msgid "Not enough members"
@@ -34209,6 +34229,11 @@ msgstr "صوت لهذا النطاق"
 #: src/features/user/components/settings_utils/section_registry/SharedDescriptors.ts
 msgid "Sound volume"
 msgstr "مستوى الصوت"
+
+#. Label of the voice call button that opens the soundboard menu with the sounds you can play to the call.
+#: src/features/voice/components/SoundboardMenu.tsx
+msgid "Soundboard"
+msgstr "Soundboard"
 
 #. Section heading / tab label for the notification-sounds area.
 #. Settings search synonym. Used to match this term when the user types it in the settings search bar.
