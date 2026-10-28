@@ -1433,9 +1433,25 @@ class MediaEngineFacade extends Store {
 		this.cancelPendingServerDisconnect();
 		this.transitionFacadeState({type: 'channelMove.cleanupStarted', reason});
 		await this.stopActiveScreenShareForTeardown('channel_move');
+		// A VOICE_SERVER_UPDATE for the move may have arrived while awaiting and now owns the connection.
+		// Tearing it down would invalidate its attempt and the client would fall back to the old channel.
+		const supersededByVoiceServer =
+			reason === 'server' && voiceEngineV2AppConnectionHostAdapter.channelId !== channelId;
 		this.clearViewerStreamKeys();
-		this.stopTracking();
-		this.statsHostAdapter.reset();
+		if (!supersededByVoiceServer || !voiceEngineV2AppConnectionHostAdapter.connected) {
+			this.stopTracking();
+			this.statsHostAdapter.reset();
+		}
+		if (supersededByVoiceServer) {
+			logger.info('Channel move teardown superseded by voice server update', {
+				previousChannelId: channelId,
+				channelId: voiceEngineV2AppConnectionHostAdapter.channelId,
+			});
+			if (!voiceEngineV2AppConnectionHostAdapter.connected) this.voiceEngineV2Participants.clear();
+			SoundCommands.playSound(SoundType.UserMove);
+			this.transitionFacadeState({type: 'cleanup.complete'});
+			return;
+		}
 		if (reason === 'user' && connectionId) {
 			sendVoiceStateDisconnect(guildId, connectionId);
 		}
@@ -1893,6 +1909,9 @@ class MediaEngineFacade extends Store {
 				) {
 					const updatedGuildId = guildId ?? voiceState.guild_id ?? null;
 					void this.disconnectForChannelMove('server').finally(() => {
+						// The VOICE_SERVER_UPDATE for this move was accepted during the teardown and is already
+						// connecting; recovering the expectation here would start a new attempt and orphan it.
+						if (voiceEngineV2AppConnectionHostAdapter.channelId === voiceState.channel_id) return;
 						voiceEngineV2AppConnectionHostAdapter.recoverConnectionExpectation(updatedGuildId, voiceState.channel_id!);
 					});
 					return;
