@@ -26,6 +26,7 @@ import {
 	VoiceCameraSettingsBottomSheet,
 	VoiceMoreOptionsBottomSheet,
 } from '@app/features/voice/components/bottomsheets/VoiceSettingsBottomSheets';
+import {GOLF_DESCRIPTOR, openGolfModal} from '@app/features/voice/components/GolfModal';
 import {
 	CameraPreviewModalInRoom,
 	CameraPreviewModalStandalone,
@@ -101,6 +102,7 @@ import {
 	CaretDownIcon,
 	DotsThreeIcon,
 	EyeSlashIcon,
+	FlagPennantIcon,
 	GearIcon,
 	MicrophoneIcon,
 	MicrophoneSlashIcon,
@@ -822,6 +824,33 @@ const VoiceControlBarInner = observer(function VoiceControlBarInner() {
 									weight="fill"
 									className={styles.icon}
 									data-flx="voice.voice-control-bar.voice-control-bar-inner.icon.truco"
+								/>
+							</button>
+						</FocusRing>
+					</Tooltip>
+				</div>
+			)}
+			{isConnected && (
+				<div
+					className={styles.buttonContainer}
+					data-flx="voice.voice-control-bar.voice-control-bar-inner.button-container.golf"
+				>
+					<Tooltip
+						text={i18n._(GOLF_DESCRIPTOR)}
+						data-flx="voice.voice-control-bar.voice-control-bar-inner.tooltip.golf"
+					>
+						<FocusRing offset={-2} data-flx="voice.voice-control-bar.voice-control-bar-inner.focus-ring.golf">
+							<button
+								type="button"
+								className={clsx(styles.button, styles.buttonUnmuted)}
+								onClick={openGolfModal}
+								aria-label={i18n._(GOLF_DESCRIPTOR)}
+								data-flx="voice.voice-control-bar.voice-control-bar-inner.button.golf"
+							>
+								<FlagPennantIcon
+									weight="fill"
+									className={styles.icon}
+									data-flx="voice.voice-control-bar.voice-control-bar-inner.icon.golf"
 								/>
 							</button>
 						</FocusRing>

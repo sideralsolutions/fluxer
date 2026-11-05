@@ -44295,6 +44295,181 @@ msgstr "Mute table sounds"
 msgid "Unmute table sounds"
 msgstr "Unmute table sounds"
 
+#. Label of the voice call button that opens the minigolf game.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Play golf"
+msgstr "Play golf"
+
+#. Name of the minigolf game. Keep the Portuguese name.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Bola Torta"
+msgstr "Bola Torta"
+
+#. Shown when the minigolf game cannot start because the voice call is peer-to-peer.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Golf is not available in peer-to-peer calls"
+msgstr "Golf is not available in peer-to-peer calls"
+
+#. Shown when the minigolf game cannot use WebGL.
+#: src/features/voice/components/GolfModal.tsx
+msgid "This device cannot show 3D. Turn on hardware acceleration and open the game again."
+msgstr "This device cannot show 3D. Turn on hardware acceleration and open the game again."
+
+#. Heading above the minigolf mode choices.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Game mode"
+msgstr "Game mode"
+
+#. Minigolf mode where the fewest strokes win.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Classic"
+msgstr "Classic"
+
+#. Explains the classic minigolf mode.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Fewest strokes across all courses wins."
+msgstr "Fewest strokes across all courses wins."
+
+#. Minigolf elimination mode.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Tournament"
+msgstr "Tournament"
+
+#. Explains the minigolf tournament mode.
+#: src/features/voice/components/GolfModal.tsx
+msgid "The worst player of each course is out, until one is left."
+msgstr "The worst player of each course is out, until one is left."
+
+#. Minigolf mode where the order of arrival scores points.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Race"
+msgstr "Race"
+
+#. Explains the minigolf race mode.
+#: src/features/voice/components/GolfModal.tsx
+msgid "First to the hole scores the most points. Strokes do not count."
+msgstr "First to the hole scores the most points. Strokes do not count."
+
+#. Heading above the number of minigolf courses to play.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Courses"
+msgstr "Courses"
+
+#. Heading above the list of minigolf players.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Players"
+msgstr "Players"
+
+#. Button that joins the next minigolf game.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Join game"
+msgstr "Join game"
+
+#. Button that leaves the next minigolf game.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Leave game"
+msgstr "Leave game"
+
+#. Button that adds a computer player to minigolf.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Add bot"
+msgstr "Add bot"
+
+#. Button that removes a computer player from minigolf.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Remove bot"
+msgstr "Remove bot"
+
+#. Shown when the minigolf tournament has a single player.
+#: src/features/voice/components/GolfModal.tsx
+msgid "A tournament needs at least two players. Add a bot or call someone."
+msgstr "A tournament needs at least two players. Add a bot or call someone."
+
+#. Progress of a minigolf game.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Course {index} of {count}"
+msgstr "Course {index} of {count}"
+
+#. Progress of a minigolf tournament.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Course {index}"
+msgstr "Course {index}"
+
+#. Minigolf score column: strokes on this course.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Strokes"
+msgstr "Strokes"
+
+#. Minigolf score column: strokes so far.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Total"
+msgstr "Total"
+
+#. Minigolf score column: race points.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Points"
+msgstr "Points"
+
+#. Minigolf controls.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Drag back and release to shoot. Right button or Q and E turn the camera, M shows the course."
+msgstr "Drag back and release to shoot. Right button or Q and E turn the camera, M shows the course."
+
+#. Shown to someone in the call who is not in the running minigolf game.
+#: src/features/voice/components/GolfModal.tsx
+msgid "You are watching this game."
+msgstr "You are watching this game."
+
+#. Shown to a player eliminated from the minigolf tournament.
+#: src/features/voice/components/GolfModal.tsx
+msgid "You are out. Watch the others finish."
+msgstr "You are out. Watch the others finish."
+
+#. Button that shows the whole minigolf course from above.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Show course"
+msgstr "Show course"
+
+#. Button that returns the minigolf camera to the ball.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Back to ball"
+msgstr "Back to ball"
+
+#. Button that silences the minigolf game.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Mute game sounds"
+msgstr "Mute game sounds"
+
+#. Button that brings back the minigolf sounds.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Unmute game sounds"
+msgstr "Unmute game sounds"
+
+#. Heading of the minigolf course results.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Course finished"
+msgstr "Course finished"
+
+#. Minigolf result of a player who did not reach the hole.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Did not finish"
+msgstr "Did not finish"
+
+#. Names of the players eliminated from the minigolf tournament.
+#: src/features/voice/components/GolfModal.tsx
+msgid "{names} out of the tournament"
+msgstr "{names} out of the tournament"
+
+#. Heading of the minigolf final results.
+#: src/features/voice/components/GolfModal.tsx
+msgid "{name} won!"
+msgstr "{name} won!"
+
+#. Result of the previous minigolf game, shown in the lobby.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Last game: {name} won"
+msgstr "Last game: {name} won"
+
 #. Truco team name. {team} is 1 or 2.
 #: src/features/voice/components/TrucoModal.tsx
 msgid "Team {team}"

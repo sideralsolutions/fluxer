@@ -44295,6 +44295,181 @@ msgstr "Silenciar a mesa"
 msgid "Unmute table sounds"
 msgstr "Ativar os sons da mesa"
 
+#. Label of the voice call button that opens the minigolf game.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Play golf"
+msgstr "Jogar golfe"
+
+#. Name of the minigolf game. Keep the Portuguese name.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Bola Torta"
+msgstr "Bola Torta"
+
+#. Shown when the minigolf game cannot start because the voice call is peer-to-peer.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Golf is not available in peer-to-peer calls"
+msgstr "O golfe não funciona em chamadas ponto a ponto"
+
+#. Shown when the minigolf game cannot use WebGL.
+#: src/features/voice/components/GolfModal.tsx
+msgid "This device cannot show 3D. Turn on hardware acceleration and open the game again."
+msgstr "Este aparelho não consegue mostrar 3D. Ligue a aceleração de hardware e abra o jogo de novo."
+
+#. Heading above the minigolf mode choices.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Game mode"
+msgstr "Modo de jogo"
+
+#. Minigolf mode where the fewest strokes win.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Classic"
+msgstr "Clássico"
+
+#. Explains the classic minigolf mode.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Fewest strokes across all courses wins."
+msgstr "Vence quem somar menos tacadas em todas as pistas."
+
+#. Minigolf elimination mode.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Tournament"
+msgstr "Torneio"
+
+#. Explains the minigolf tournament mode.
+#: src/features/voice/components/GolfModal.tsx
+msgid "The worst player of each course is out, until one is left."
+msgstr "O pior de cada pista é eliminado, até sobrar um."
+
+#. Minigolf mode where the order of arrival scores points.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Race"
+msgstr "Corrida"
+
+#. Explains the minigolf race mode.
+#: src/features/voice/components/GolfModal.tsx
+msgid "First to the hole scores the most points. Strokes do not count."
+msgstr "Quem chega primeiro no buraco ganha mais pontos. Tacadas não contam."
+
+#. Heading above the number of minigolf courses to play.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Courses"
+msgstr "Pistas"
+
+#. Heading above the list of minigolf players.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Players"
+msgstr "Jogadores"
+
+#. Button that joins the next minigolf game.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Join game"
+msgstr "Entrar no jogo"
+
+#. Button that leaves the next minigolf game.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Leave game"
+msgstr "Sair do jogo"
+
+#. Button that adds a computer player to minigolf.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Add bot"
+msgstr "Adicionar bot"
+
+#. Button that removes a computer player from minigolf.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Remove bot"
+msgstr "Tirar bot"
+
+#. Shown when the minigolf tournament has a single player.
+#: src/features/voice/components/GolfModal.tsx
+msgid "A tournament needs at least two players. Add a bot or call someone."
+msgstr "O torneio precisa de pelo menos dois jogadores. Adicione um bot ou chame alguém."
+
+#. Progress of a minigolf game.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Course {index} of {count}"
+msgstr "Pista {index} de {count}"
+
+#. Progress of a minigolf tournament.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Course {index}"
+msgstr "Pista {index}"
+
+#. Minigolf score column: strokes on this course.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Strokes"
+msgstr "Tacadas"
+
+#. Minigolf score column: strokes so far.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Total"
+msgstr "Total"
+
+#. Minigolf score column: race points.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Points"
+msgstr "Pontos"
+
+#. Minigolf controls.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Drag back and release to shoot. Right button or Q and E turn the camera, M shows the course."
+msgstr "Arraste para trás e solte para tacar. Botão direito ou Q e E giram a câmera, M mostra a pista."
+
+#. Shown to someone in the call who is not in the running minigolf game.
+#: src/features/voice/components/GolfModal.tsx
+msgid "You are watching this game."
+msgstr "Você está assistindo a esta partida."
+
+#. Shown to a player eliminated from the minigolf tournament.
+#: src/features/voice/components/GolfModal.tsx
+msgid "You are out. Watch the others finish."
+msgstr "Você foi eliminado. Veja os outros terminarem."
+
+#. Button that shows the whole minigolf course from above.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Show course"
+msgstr "Ver pista"
+
+#. Button that returns the minigolf camera to the ball.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Back to ball"
+msgstr "Voltar à bola"
+
+#. Button that silences the minigolf game.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Mute game sounds"
+msgstr "Silenciar o jogo"
+
+#. Button that brings back the minigolf sounds.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Unmute game sounds"
+msgstr "Ativar os sons do jogo"
+
+#. Heading of the minigolf course results.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Course finished"
+msgstr "Fim da pista"
+
+#. Minigolf result of a player who did not reach the hole.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Did not finish"
+msgstr "Não terminou"
+
+#. Names of the players eliminated from the minigolf tournament.
+#: src/features/voice/components/GolfModal.tsx
+msgid "{names} out of the tournament"
+msgstr "{names} fora do torneio"
+
+#. Heading of the minigolf final results.
+#: src/features/voice/components/GolfModal.tsx
+msgid "{name} won!"
+msgstr "{name} venceu!"
+
+#. Result of the previous minigolf game, shown in the lobby.
+#: src/features/voice/components/GolfModal.tsx
+msgid "Last game: {name} won"
+msgstr "Última partida: {name} venceu"
+
 #. Truco team name. {team} is 1 or 2.
 #: src/features/voice/components/TrucoModal.tsx
 msgid "Team {team}"

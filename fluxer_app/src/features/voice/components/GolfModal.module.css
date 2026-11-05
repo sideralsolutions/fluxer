@@ -1,0 +1,317 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+
+.stage {
+	position: relative;
+	height: calc(min(60rem, 100svh - 2.5rem) - 4.5rem);
+	min-height: 24rem;
+	overflow: hidden;
+	color: #fff;
+	--golf-panel: rgb(20 16 28 / 0.86);
+	--golf-line: rgb(255 255 255 / 0.14);
+	--golf-sun: #ffc533;
+	--golf-hot: #ff5a36;
+	--golf-go: #3ddc97;
+}
+
+.canvas {
+	display: block;
+	width: 100%;
+	height: 100%;
+	cursor: grab;
+	touch-action: none;
+}
+
+.hidden {
+	visibility: hidden;
+}
+
+.lobby {
+	position: absolute;
+	inset: 0;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1rem;
+	padding: 1.25rem 1rem;
+	background: var(--background-primary);
+	color: var(--text-primary);
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	width: min(100%, 44rem);
+}
+
+.sectionTitle {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--text-secondary);
+}
+
+.modes {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+	gap: 0.5rem;
+}
+
+.mode {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	padding: 0.75rem;
+	border: 0.125rem solid transparent;
+	border-radius: 0.5rem;
+	background: var(--background-secondary);
+	color: var(--text-primary);
+	text-align: left;
+	cursor: pointer;
+}
+
+.mode:hover {
+	border-color: var(--text-tertiary);
+}
+
+.modeActive {
+	border-color: var(--golf-sun);
+}
+
+.modeName {
+	font-size: 0.9375rem;
+	font-weight: 700;
+}
+
+.modeHint {
+	font-size: 0.8125rem;
+	line-height: 1.35;
+	color: var(--text-secondary);
+}
+
+.row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.players {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+	gap: 0.375rem;
+}
+
+.player {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	min-width: 0;
+	padding: 0.375rem 0.625rem;
+	border-radius: 0.375rem;
+	background: var(--background-secondary);
+	font-size: 0.875rem;
+}
+
+.dot {
+	flex: none;
+	width: 0.75rem;
+	height: 0.75rem;
+	border-radius: 50%;
+}
+
+.name {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.hint {
+	font-size: 0.8125rem;
+	color: var(--text-tertiary);
+	text-align: center;
+}
+
+.status {
+	font-size: 0.875rem;
+	color: var(--text-secondary);
+	text-align: center;
+}
+
+.top {
+	position: absolute;
+	inset: 0.75rem 0.75rem auto;
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 0.75rem;
+	pointer-events: none;
+}
+
+.title {
+	font-size: 1rem;
+	font-weight: 800;
+	text-shadow: 0 0.0625rem 0.25rem rgb(0 0 0 / 0.8);
+}
+
+.subtitle {
+	font-size: 0.8125rem;
+	text-shadow: 0 0.0625rem 0.25rem rgb(0 0 0 / 0.8);
+}
+
+.clock {
+	margin-top: 0.25rem;
+	font-size: 1rem;
+	font-weight: 800;
+	font-variant-numeric: tabular-nums;
+	color: var(--golf-sun);
+	text-shadow: 0 0.0625rem 0.25rem rgb(0 0 0 / 0.8);
+}
+
+.score {
+	display: grid;
+	grid-template-columns: 0.75rem minmax(0, 8rem) auto auto;
+	align-items: center;
+	gap: 0.125rem 0.5rem;
+	padding: 0.5rem 0.75rem;
+	border: 0.0625rem solid var(--golf-line);
+	border-radius: 0.625rem;
+	background: var(--golf-panel);
+	font-size: 0.8125rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.scoreHead {
+	grid-column: 3 / span 1;
+	font-size: 0.6875rem;
+	opacity: 0.7;
+	text-align: right;
+}
+
+.scoreHeadTotal {
+	grid-column: 4 / span 1;
+	font-size: 0.6875rem;
+	opacity: 0.7;
+	text-align: right;
+}
+
+.value {
+	text-align: right;
+	font-weight: 700;
+}
+
+.valueDone {
+	color: var(--golf-go);
+}
+
+.playerOut {
+	opacity: 0.45;
+	text-decoration: line-through;
+}
+
+.bottom {
+	position: absolute;
+	inset: auto 0.75rem 0.75rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	pointer-events: none;
+}
+
+.power {
+	width: min(20rem, 70%);
+	height: 0.75rem;
+	overflow: hidden;
+	border: 0.0625rem solid var(--golf-line);
+	border-radius: 0.375rem;
+	background: rgb(0 0 0 / 0.45);
+}
+
+.powerFill {
+	width: 100%;
+	height: 100%;
+	transform: scaleX(0);
+	transform-origin: left;
+	background: linear-gradient(90deg, var(--golf-go), var(--golf-sun) 55%, var(--golf-hot));
+}
+
+.tip {
+	font-size: 0.8125rem;
+	text-align: center;
+	text-shadow: 0 0.0625rem 0.25rem rgb(0 0 0 / 0.9);
+}
+
+.controls {
+	display: flex;
+	gap: 0.5rem;
+	pointer-events: auto;
+}
+
+.overlay {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	pointer-events: none;
+}
+
+.countdown {
+	font-size: 7rem;
+	font-weight: 900;
+	color: var(--golf-sun);
+	text-shadow:
+		0 0.25rem 0 var(--golf-hot),
+		0 0.5rem 1.25rem rgb(0 0 0 / 0.7);
+	animation: golfCount 0.9s ease-out;
+}
+
+.card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.625rem;
+	width: min(26rem, 90%);
+	padding: 1rem 1.25rem;
+	border: 0.0625rem solid var(--golf-line);
+	border-radius: 0.75rem;
+	background: var(--golf-panel);
+}
+
+.cardTitle {
+	font-size: 1.25rem;
+	font-weight: 800;
+	color: var(--golf-sun);
+	text-align: center;
+}
+
+.ranking {
+	display: grid;
+	grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+	gap: 0.25rem 0.5rem;
+	font-size: 0.9375rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.eliminated {
+	font-weight: 700;
+	color: var(--golf-hot);
+	text-align: center;
+}
+
+@keyframes golfCount {
+	from {
+		opacity: 0;
+		scale: 2;
+	}
+}
+
+:global(html.reduced-motion) .countdown {
+	animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.countdown {
+		animation: none;
+	}
+}

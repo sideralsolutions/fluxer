@@ -2,14 +2,12 @@
 
 import Accessibility from '@app/features/accessibility/state/Accessibility';
 import * as Modal from '@app/features/app/components/dialogs/Modal';
-import RuntimeConfig from '@app/features/app/state/RuntimeConfig';
 import {Button} from '@app/features/ui/button/Button';
 import * as ModalCommands from '@app/features/ui/commands/ModalCommands';
 import {Avatar} from '@app/features/ui/components/Avatar';
 import {Input} from '@app/features/ui/components/form/FormInput';
 import {Spinner} from '@app/features/ui/components/Spinner';
 import Users from '@app/features/user/state/Users';
-import * as NicknameUtils from '@app/features/user/utils/NicknameUtils';
 import {
 	type Card,
 	type GameView,
@@ -19,8 +17,7 @@ import {
 } from '@app/features/voice/components/TrucoEvents';
 import styles from '@app/features/voice/components/TrucoModal.module.css';
 import trucoSounds, {DEAL_STEP_MS} from '@app/features/voice/components/TrucoSounds';
-import MediaEngine from '@app/features/voice/engine/MediaEngineFacade';
-import voiceEngineV2AppConnectionHostAdapter from '@app/features/voice/engine/v2/VoiceEngineV2AppConnectionHostAdapter';
+import {type GameSend, useVoiceGameSocket} from '@app/features/voice/components/VoiceGameSocket';
 import type {I18n} from '@lingui/core';
 import {msg} from '@lingui/core/macro';
 import {useLingui} from '@lingui/react/macro';
@@ -28,10 +25,9 @@ import {RobotIcon, SpeakerHighIcon, SpeakerSlashIcon} from '@phosphor-icons/reac
 import {clsx} from 'clsx';
 import {observer} from 'mobx-react-lite';
 import type React from 'react';
-import {useCallback, useEffect, useRef, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 
-const RECONNECT_DELAY_MS = 2000;
-const UNAUTHORIZED_CLOSE_CODE = 4001;
+const SOCKET_PATH = '/truco/ws';
 const TEAM_NAME_MAX_LENGTH = 20;
 const AVATAR_SIZE = 40;
 const PLAY_RADIUS = 21;
@@ -140,9 +136,6 @@ const PARTNER_DESCRIPTOR = msg({
 	comment: 'Label before the cards of the partner, shown in the truco hand of eleven.',
 });
 
-type ConnectionStatus = 'unavailable' | 'connecting' | 'open' | 'lost';
-type TrucoSend = (message: Record<string, unknown>) => void;
-
 const RAISE_DESCRIPTORS = {
 	3: RAISE_3_DESCRIPTOR,
 	6: RAISE_6_DESCRIPTOR,
@@ -150,52 +143,6 @@ const RAISE_DESCRIPTORS = {
 	12: RAISE_12_DESCRIPTOR,
 } as const;
 const NEXT_RAISE: Record<number, keyof typeof RAISE_DESCRIPTORS> = {1: 3, 3: 6, 6: 9, 9: 12};
-
-function useTrucoTable(): {state: TableView | null; status: ConnectionStatus; send: TrucoSend} {
-	const [state, setState] = useState<TableView | null>(null);
-	const [status, setStatus] = useState<ConnectionStatus>('connecting');
-	const socketRef = useRef<WebSocket | null>(null);
-	const {channelId, guildId} = MediaEngine;
-	useEffect(() => {
-		let disposed = false;
-		let retry: ReturnType<typeof setTimeout> | undefined;
-		const connect = () => {
-			const token = voiceEngineV2AppConnectionHostAdapter.latestVoiceToken;
-			if (!token) {
-				setStatus('unavailable');
-				return;
-			}
-			const user = Users.getCurrentUser();
-			const name = user ? NicknameUtils.getNickname(user, guildId, channelId ?? undefined) : '';
-			const endpoint = RuntimeConfig.webAppEndpoint.replace(/^http/, 'ws').replace(/\/+$/, '');
-			const socket = new WebSocket(`${endpoint}/truco/ws`);
-			socketRef.current = socket;
-			socket.onopen = () => {
-				socket.send(JSON.stringify({t: 'hello', token, name}));
-				setStatus('open');
-			};
-			socket.onmessage = (event) => {
-				const message = JSON.parse(event.data as string) as {t: string; state?: TableView};
-				if (message.t === 'state' && message.state) setState(message.state);
-			};
-			socket.onclose = (event) => {
-				if (disposed) return;
-				setStatus(event.code === UNAUTHORIZED_CLOSE_CODE ? 'unavailable' : 'lost');
-				if (event.code !== UNAUTHORIZED_CLOSE_CODE) retry = setTimeout(connect, RECONNECT_DELAY_MS);
-			};
-		};
-		connect();
-		return () => {
-			disposed = true;
-			clearTimeout(retry);
-			socketRef.current?.close();
-		};
-	}, [channelId, guildId]);
-	const send = useCallback<TrucoSend>((message) => {
-		if (socketRef.current?.readyState === WebSocket.OPEN) socketRef.current.send(JSON.stringify(message));
-	}, []);
-	return {state, status, send};
-}
 
 function cardClasses(card: Card | null, manilha?: string) {
 	if (!card) return clsx(styles.card, styles.cardBack);
@@ -252,7 +199,7 @@ function seatPoint(seat: number, you: number | null, players: number, radius: nu
 const dealDelay = (round: number, relative: number, players: number) =>
 	`${(round * players + relative) * DEAL_STEP_MS}ms`;
 
-function TeamNameField({state, team, send}: {state: TableView; team: number; send: TrucoSend}) {
+function TeamNameField({state, team, send}: {state: TableView; team: number; send: GameSend}) {
 	const {i18n} = useLingui();
 	const name = state.teamNames[team];
 	if (state.you === null || state.you % 2 !== team) {
@@ -290,7 +237,7 @@ function SeatAvatar({userId, name, bot}: {userId: string | null; name: string; b
 	);
 }
 
-function Lobby({state, send}: {state: TableView; send: TrucoSend}) {
+function Lobby({state, send}: {state: TableView; send: GameSend}) {
 	const {i18n} = useLingui();
 	const seated = state.you !== null;
 	const seatsOf = (team: number) =>
@@ -450,7 +397,7 @@ function PlayOnTable({
 	);
 }
 
-function GameTable({state, game, send}: {state: TableView; game: GameView; send: TrucoSend}) {
+function GameTable({state, game, send}: {state: TableView; game: GameView; send: GameSend}) {
 	const {i18n} = useLingui();
 	const [faceDown, setFaceDown] = useState(false);
 	const [muted, setMuted] = useState(trucoSounds.muted);
@@ -792,7 +739,7 @@ function GameTable({state, game, send}: {state: TableView; game: GameView; send:
 
 const TrucoModal: React.FC = observer(() => {
 	const {i18n} = useLingui();
-	const {state, status, send} = useTrucoTable();
+	const {state, status, send} = useVoiceGameSocket<TableView>(SOCKET_PATH);
 	const previousState = useRef<TableView | null>(null);
 	useEffect(() => {
 		if (state) trucoSounds.play(trucoSoundsBetween(previousState.current, state), state.players);
