@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import * as Modal from '@app/features/app/components/dialogs/Modal';
+import {wrapDesktopLocalResourceURL} from '@app/features/messaging/utils/DesktopResourceUrl';
 import {Logger} from '@app/features/platform/utils/AppLogger';
 import {readBlobAsBase64NoPrefix} from '@app/features/platform/utils/BlobDataUrl';
 import {Button} from '@app/features/ui/button/Button';
@@ -73,7 +74,7 @@ function bufferKey(sound: MyInstantsSound): string {
 async function favoriteSound(sound: MyInstantsSound): Promise<void> {
 	const [buffer, response] = await Promise.all([
 		EntranceSoundPlaybackEngine.fetchBuffer(sound.url, bufferKey(sound)),
-		fetch(sound.url, {cache: 'force-cache'}),
+		fetch(wrapDesktopLocalResourceURL(sound.url), {cache: 'force-cache'}),
 	]);
 	if (!buffer || !response.ok) throw new Error('Could not load sound');
 	const blob = await response.blob();
@@ -187,7 +188,11 @@ const SoundSearchModal: React.FC = observer(() => {
 
 	let status: React.ReactNode = null;
 	if (failed) {
-		status = <p className={styles.hint} data-flx="voice.sound-search-modal.hint">{i18n._(SEARCH_FAILED_DESCRIPTOR)}</p>;
+		status = (
+			<p className={styles.hint} data-flx="voice.sound-search-modal.hint">
+				{i18n._(SEARCH_FAILED_DESCRIPTOR)}
+			</p>
+		);
 	} else if (loading) {
 		status = (
 			<div className={styles.center} data-flx="voice.sound-search-modal.center">
@@ -195,15 +200,25 @@ const SoundSearchModal: React.FC = observer(() => {
 			</div>
 		);
 	} else if (sounds.length === 0) {
-		status = <p className={styles.hint} data-flx="voice.sound-search-modal.hint--2">{i18n._(NO_RESULTS_DESCRIPTOR)}</p>;
+		status = (
+			<p className={styles.hint} data-flx="voice.sound-search-modal.hint--2">
+				{i18n._(NO_RESULTS_DESCRIPTOR)}
+			</p>
+		);
 	}
 
 	return (
 		<Modal.Root size="small" centered data-flx="voice.sound-search-modal.modal-root">
-			<Modal.Header title={i18n._(TITLE_DESCRIPTOR)} onClose={ModalCommands.pop} data-flx="voice.sound-search-modal.modal-header" />
+			<Modal.Header
+				title={i18n._(TITLE_DESCRIPTOR)}
+				onClose={ModalCommands.pop}
+				data-flx="voice.sound-search-modal.modal-header"
+			/>
 			<Modal.Content padding="default" data-flx="voice.sound-search-modal.modal-content">
 				<div className={styles.body} data-flx="voice.sound-search-modal.body">
-					<p className={styles.hint} data-flx="voice.sound-search-modal.hint--3">{i18n._(SOURCE_DESCRIPTOR)}</p>
+					<p className={styles.hint} data-flx="voice.sound-search-modal.hint--3">
+						{i18n._(SOURCE_DESCRIPTOR)}
+					</p>
 					<Input
 						autoFocus
 						value={query}
@@ -226,7 +241,13 @@ const SoundSearchModal: React.FC = observer(() => {
 										small
 										variant="secondary"
 										aria-label={i18n._(PREVIEW_DESCRIPTOR)}
-										icon={isPreviewing ? <StopIcon weight="fill" data-flx="voice.sound-search-modal.stop-icon" /> : <PlayIcon weight="fill" data-flx="voice.sound-search-modal.play-icon" />}
+										icon={
+											isPreviewing ? (
+												<StopIcon weight="fill" data-flx="voice.sound-search-modal.stop-icon" />
+											) : (
+												<PlayIcon weight="fill" data-flx="voice.sound-search-modal.play-icon" />
+											)
+										}
 										onClick={() => void togglePreview(sound)}
 										data-flx="voice.sound-search-modal.button"
 									/>
@@ -240,7 +261,12 @@ const SoundSearchModal: React.FC = observer(() => {
 										aria-label={i18n._(FAVORITE_DESCRIPTOR)}
 										aria-pressed={isFavorite}
 										submitting={saving === sound.slug}
-										icon={<StarIcon weight={isFavorite ? 'fill' : 'regular'} data-flx="voice.sound-search-modal.star-icon" />}
+										icon={
+											<StarIcon
+												weight={isFavorite ? 'fill' : 'regular'}
+												data-flx="voice.sound-search-modal.star-icon"
+											/>
+										}
 										onClick={() => void toggleFavorite(sound)}
 										data-flx="voice.sound-search-modal.button--2"
 									/>
@@ -250,7 +276,12 @@ const SoundSearchModal: React.FC = observer(() => {
 					</div>
 					{status}
 					{hasMore && !loading && !failed ? (
-						<Button variant="secondary" small onClick={() => setPage((current) => current + 1)} data-flx="voice.sound-search-modal.button.set-page">
+						<Button
+							variant="secondary"
+							small
+							onClick={() => setPage((current) => current + 1)}
+							data-flx="voice.sound-search-modal.button.set-page"
+						>
 							{i18n._(LOAD_MORE_DESCRIPTOR)}
 						</Button>
 					) : null}
@@ -265,6 +296,8 @@ SoundSearchModal.displayName = 'SoundSearchModal';
 export function openSoundSearchModal(onClose: () => void): void {
 	ModalCommands.pushAfterBottomSheetClose(
 		onClose,
-		ModalCommands.modal(() => <SoundSearchModal data-flx="voice.sound-search-modal.open-sound-search-modal.sound-search-modal" />),
+		ModalCommands.modal(() => (
+			<SoundSearchModal data-flx="voice.sound-search-modal.open-sound-search-modal.sound-search-modal" />
+		)),
 	);
 }
