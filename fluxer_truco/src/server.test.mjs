@@ -125,6 +125,20 @@ describe('mesa pela rede', () => {
 		for (const client of [a, b, c]) client.socket.close();
 	});
 
+	it('só quem está no time muda o nome dele, e o nome é limitado', async () => {
+		const a = new Client(port, 40, 'nomes');
+		await a.open;
+		a.send({t: 'sit', seat: 0});
+		await a.until((state) => state.you === 0);
+		a.send({t: 'teamName', team: 1, name: 'Invasores'});
+		await new Promise((resolve) => setTimeout(resolve, 30));
+		assert.deepEqual(a.errors, ['not-your-team']);
+		a.send({t: 'teamName', team: 0, name: `  ${'x'.repeat(40)}  `});
+		const state = await a.until((value) => value.teamNames[0]);
+		assert.equal(state.teamNames[0].length, 20);
+		a.socket.close();
+	});
+
 	it('quem cai é jogado pelo bot e reassume ao voltar', async () => {
 		const a = new Client(port, 30, 'queda');
 		await a.open;

@@ -34,12 +34,13 @@ const playStrength = (play, manilha) => (play.hidden ? -1 : cardStrength(play.ca
 
 export function createGame({players, random = Math.random}) {
 	if (players !== 4 && players !== 6) throw new Error('players must be 4 or 6');
-	const game = {players, random, score: [0, 0], dealer: players - 1, hand: null, winner: null};
+	const game = {players, random, score: [0, 0], dealer: players - 1, hand: null, winner: null, handNumber: 0};
 	startHand(game);
 	return game;
 }
 
 export function startHand(game) {
+	game.handNumber += 1;
 	game.dealer = (game.dealer + 1) % game.players;
 	const deck = shuffledDeck(game.random);
 	const cards = Array.from({length: game.players}, () => deck.splice(0, HAND_SIZE));
@@ -86,7 +87,7 @@ function resolveTrick(game) {
 	const top = hand.table.filter((play) => playStrength(play, hand.manilha) === best);
 	const teams = new Set(top.map((play) => teamOf(play.seat)));
 	const result = teams.size === 1 ? [...teams][0] : 'tie';
-	hand.tricks.push({plays: hand.table, result});
+	hand.tricks.push({plays: hand.table, result, winnerSeat: result === 'tie' ? null : top[0].seat});
 	hand.results.push(result);
 	hand.table = [];
 	hand.turn = top[0].seat;
@@ -187,6 +188,7 @@ export function viewFor(game, seat) {
 	const own = seat === null ? [] : hand.cards[seat];
 	return {
 		players: game.players,
+		handNumber: game.handNumber,
 		score: game.score,
 		winner: game.winner,
 		dealer: game.dealer,
@@ -204,6 +206,7 @@ export function viewFor(game, seat) {
 		canHide: hand.tricks.length > 0,
 		trickResults: hand.results,
 		lastTrick: hand.tricks.at(-1)?.plays.map(showPlay) ?? [],
+		lastTrickWinner: hand.tricks.at(-1)?.winnerSeat ?? null,
 		table: hand.table.map(showPlay),
 		hand: hand.blind ? own.map(() => null) : own,
 		cardCounts: hand.cards.map((cards) => cards.length),

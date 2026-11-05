@@ -94,6 +94,16 @@ describe('jogadas', () => {
 		assert.equal(game.hand.phase, 'ended');
 	});
 
+	it('informa quem levou a vaza, e empate fica sem vencedor', () => {
+		const game = fourPlayers(cards());
+		playAll(game, [0, 1, 2, 3]);
+		assert.equal(viewFor(game, 1).lastTrickWinner, 0);
+		const tied = fourPlayers([[c('3'), c('2')], [c('3', 'copas'), c('2', 'copas')], [c('4'), c('5')], [c('5'), c('4')]]);
+		playAll(tied, [0, 1, 2, 3]);
+		assert.equal(viewFor(tied, 0).lastTrickWinner, null);
+		assert.equal(tied.hand.results[0], 'tie');
+	});
+
 	it('só joga quem é da vez', () => {
 		const game = fourPlayers(cards());
 		assert.equal(play(game, 1, 0), 'not-your-turn');

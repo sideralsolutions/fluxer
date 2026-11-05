@@ -38,6 +38,8 @@ export function startServer({port, apiKey, apiSecret, timing}) {
 				return table.setMode(message.players);
 			case 'sit':
 				return table.sit(socket.user, message.seat);
+			case 'teamName':
+				return table.setTeamName(userId, message.team, message.name);
 			case 'stand':
 				return table.standUp(userId);
 			case 'start':

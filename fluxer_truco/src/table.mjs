@@ -4,7 +4,8 @@ import {botAction} from './bot.mjs';
 import {createGame, decideEleven, play, raise, respond, startHand, teamOf, viewFor} from './engine.mjs';
 
 const BOT_NAMES = ['Bot Tonho', 'Bot Zefa', 'Bot Dito', 'Bot Nena', 'Bot Juca', 'Bot Lia'];
-export const DEFAULT_TIMING = {humanTurnMs: 30_000, botTurnMs: 1_100, handPauseMs: 3_500};
+const TEAM_NAME_MAX_LENGTH = 20;
+export const DEFAULT_TIMING = {humanTurnMs: 30_000, botTurnMs: 1_100, trickPauseMs: 2_000, handPauseMs: 4_000};
 
 // Uma mesa por sala de voz. Quem está offline ou estoura o tempo é jogado pelo bot até voltar.
 export class Table {
@@ -13,6 +14,7 @@ export class Table {
 		this.players = 4;
 		this.seats = Array(4).fill(null);
 		this.connected = new Set();
+		this.teamNames = ['', ''];
 		this.game = null;
 		this.timer = null;
 	}
@@ -35,6 +37,15 @@ export class Table {
 		if (this.seats.slice(players).some(Boolean)) return 'seats-taken';
 		this.players = players;
 		this.seats = Array.from({length: players}, (_, seat) => this.seats[seat] ?? null);
+		this.onChange();
+		return null;
+	}
+
+	setTeamName(userId, team, name) {
+		if (team !== 0 && team !== 1 || typeof name !== 'string') return 'invalid-team';
+		const seat = this.seatOf(userId);
+		if (seat === null || teamOf(seat) !== team) return 'not-your-team';
+		this.teamNames[team] = name.trim().slice(0, TEAM_NAME_MAX_LENGTH);
 		this.onChange();
 		return null;
 	}
@@ -140,7 +151,10 @@ export class Table {
 			return;
 		}
 		const seat = this.actingSeat();
-		const delay = this.isHumanOnline(seat) ? this.timing.humanTurnMs : this.timing.botTurnMs;
+		const {hand} = game;
+		const afterTrick = hand.table.length === 0 && hand.tricks.length > 0;
+		const botDelay = Math.max(this.timing.botTurnMs, afterTrick ? (this.timing.trickPauseMs ?? 0) : 0);
+		const delay = this.isHumanOnline(seat) ? this.timing.humanTurnMs : botDelay;
 		this.timer = this.setTimer(() => this.autoAct(seat), delay);
 	}
 
@@ -166,7 +180,12 @@ export class Table {
 		const seat = this.seatOf(userId);
 		return {
 			players: this.players,
-			seats: this.seats.map((entry) => entry && {name: entry.name, bot: entry.bot, online: entry.bot || this.connected.has(entry.userId)}),
+			seats: this.seats.map(
+				(entry) =>
+					entry && {name: entry.name, userId: entry.userId, bot: entry.bot, online: entry.bot || this.connected.has(entry.userId)},
+			),
+			teamNames: this.teamNames,
+			turnMs: this.timing.humanTurnMs,
 			you: seat,
 			lastResult: this.lastResult ?? null,
 			game: this.game ? viewFor(this.game, seat) : null,
