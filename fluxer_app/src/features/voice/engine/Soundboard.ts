@@ -4,7 +4,9 @@ import RuntimeConfig from '@app/features/app/state/RuntimeConfig';
 import {Logger} from '@app/features/platform/utils/AppLogger';
 import Users from '@app/features/user/state/Users';
 import EntranceSoundPlaybackEngine from '@app/features/voice/engine/EntranceSoundPlaybackEngine';
+import {getEffectiveAudioState} from '@app/features/voice/engine/VoiceEffectiveAudioState';
 import type {EntranceSoundEntry} from '@app/features/voice/state/EntranceSoundLibrary';
+import EntranceSoundListenerPrefs from '@app/features/voice/state/EntranceSoundListenerPrefs';
 import {parseVoiceParticipantIdentity} from '@app/features/voice/utils/VoiceParticipantIdentity';
 import {
 	ENTRANCE_SOUND_EXTENSIONS,
@@ -12,7 +14,7 @@ import {
 	type EntranceSoundExtension,
 } from '@fluxer/constants/src/EntranceSoundConstants';
 import {type Participant, type Room, RoomEvent} from 'livekit-client';
-import {action, makeObservable, observable} from 'mobx';
+import {action, makeObservable, observable, reaction} from 'mobx';
 
 const logger = new Logger('Soundboard');
 
@@ -27,6 +29,12 @@ interface SoundboardPlayMessage {
 	ext: EntranceSoundExtension;
 	duration_ms: number;
 }
+
+interface SoundboardStopMessage {
+	op: 'stop';
+}
+
+type SoundboardMessage = SoundboardPlayMessage | SoundboardStopMessage;
 
 // Sounds come from each member's entrance sound library. Plays travel over the LiveKit data channel instead of the
 // entrance sound endpoint, which is rate limited for joins and is dropped by listeners outside the join chime window.
@@ -55,7 +63,22 @@ class Soundboard {
 			this.handleMessage(participant, payload);
 		};
 		room.on(RoomEvent.DataReceived, onDataReceived);
-		this.disposer = () => room.off(RoomEvent.DataReceived, onDataReceived);
+		const stopVolumeReaction = reaction(
+			() => [EntranceSoundListenerPrefs.volumes, EntranceSoundListenerPrefs.localMutes],
+			() => EntranceSoundPlaybackEngine.refreshActiveVolumes(),
+		);
+		const stopDeafReaction = reaction(
+			() => getEffectiveAudioState().effectiveDeaf,
+			(deaf) => {
+				if (deaf) EntranceSoundPlaybackEngine.stopAll();
+			},
+		);
+		this.disposer = () => {
+			room.off(RoomEvent.DataReceived, onDataReceived);
+			stopVolumeReaction();
+			stopDeafReaction();
+			EntranceSoundPlaybackEngine.stopAll();
+		};
 	}
 
 	dispose(): void {
@@ -70,19 +93,28 @@ class Soundboard {
 		const room = this.room;
 		const userId = Users.getCurrentUser()?.id;
 		if (!room || !userId || !this.takeCooldown(userId)) return;
-		const message: SoundboardPlayMessage = {
+		void EntranceSoundPlaybackEngine.play({userId, hash: sound.hash, url: sound.url, durationMs: sound.durationMs});
+		await this.publish(room, {
 			hash: sound.hash,
 			ext: sound.extension as EntranceSoundExtension,
 			duration_ms: sound.durationMs,
-		};
-		void EntranceSoundPlaybackEngine.play({userId, hash: sound.hash, url: sound.url, durationMs: sound.durationMs});
+		});
+	}
+
+	// Silences everything on this device, and for everyone else only what this user is playing.
+	async stop(): Promise<void> {
+		EntranceSoundPlaybackEngine.stopAll();
+		if (this.room) await this.publish(this.room, {op: 'stop'});
+	}
+
+	private async publish(room: Room, message: SoundboardMessage): Promise<void> {
 		try {
 			await room.localParticipant.publishData(TEXT_ENCODER.encode(JSON.stringify(message)), {
 				reliable: true,
 				topic: PROTOCOL_TOPIC,
 			});
 		} catch (error) {
-			logger.warn('Failed to publish soundboard play', {error});
+			logger.warn('Failed to publish soundboard message', {error});
 		}
 	}
 
@@ -92,6 +124,10 @@ class Soundboard {
 		const message = parseMessage(payload);
 		if (!message) {
 			logger.debug('Ignoring malformed soundboard message', {identity: participant.identity});
+			return;
+		}
+		if ('op' in message) {
+			EntranceSoundPlaybackEngine.stop(userId);
 			return;
 		}
 		if (!this.takeCooldown(userId)) return;
@@ -108,7 +144,7 @@ class Soundboard {
 	}
 }
 
-function parseMessage(payload: Uint8Array): SoundboardPlayMessage | null {
+function parseMessage(payload: Uint8Array): SoundboardMessage | null {
 	let parsed: unknown;
 	try {
 		parsed = JSON.parse(TEXT_DECODER.decode(payload));
@@ -116,7 +152,8 @@ function parseMessage(payload: Uint8Array): SoundboardPlayMessage | null {
 		return null;
 	}
 	if (!parsed || typeof parsed !== 'object') return null;
-	const {hash, ext, duration_ms: durationMs} = parsed as Record<string, unknown>;
+	const {op, hash, ext, duration_ms: durationMs} = parsed as Record<string, unknown>;
+	if (op === 'stop') return {op};
 	if (typeof hash !== 'string' || !HASH_PATTERN.test(hash)) return null;
 	if (!ENTRANCE_SOUND_EXTENSIONS.includes(ext as EntranceSoundExtension)) return null;
 	if (typeof durationMs !== 'number' || !Number.isFinite(durationMs) || durationMs <= 0) return null;

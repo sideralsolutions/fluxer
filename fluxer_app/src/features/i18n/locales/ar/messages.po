@@ -44199,3 +44199,13 @@ msgstr "تكبير"
 #: src/features/user/components/settings_utils/search_index/KeybindsIndex.ts
 msgid "Zoom out"
 msgstr "تصغير"
+
+#. Soundboard menu item that stops every sound playing for you, and the user's own sounds for everyone.
+#: src/features/voice/components/SoundboardMenu.tsx
+msgid "Stop sounds"
+msgstr "Stop sounds"
+
+#. Soundboard menu slider label for the local volume of the user's own sounds.
+#: src/features/voice/components/SoundboardMenu.tsx
+msgid "My sounds"
+msgstr "My sounds"

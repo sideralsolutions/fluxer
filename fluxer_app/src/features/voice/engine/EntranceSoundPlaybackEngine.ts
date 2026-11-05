@@ -29,11 +29,18 @@ interface PlayParams {
 	durationMs: number;
 }
 
+interface ActivePlayback {
+	source: AudioBufferSourceNode;
+	gain: GainNode;
+}
+
 class EntranceSoundPlaybackEngine {
 	private audioContext: AudioContext | null = null;
 	private bufferCache: Map<string, AudioBuffer> = new Map();
 	private speakingTimers: Map<string, NodeJS.Timeout> = new Map();
 	private lastAppliedSinkId: string | null = null;
+	private activePlaybacks: Map<string, ActivePlayback> = new Map();
+	private playTokens: Map<string, number> = new Map();
 
 	private ensureContext(): AudioContext | null {
 		if (typeof window === 'undefined') return null;
@@ -120,6 +127,24 @@ class EntranceSoundPlaybackEngine {
 		return Math.max(0, Math.min(MAX_MASTER_VOLUME_PERCENT, Sound.getMasterVolume())) / 100;
 	}
 
+	private computeGain(userId: string): number {
+		const listenerVolumePct = EntranceSoundListenerPrefs.getVolume(userId);
+		const outputVolumePct = VoiceSettings.getOutputVolume();
+		return Math.max(
+			0,
+			Math.min(3, (listenerVolumePct / 100) * (outputVolumePct / 100) * this.getMasterVolumeMultiplier()),
+		);
+	}
+
+	private releaseSpeaking(userId: string): void {
+		const timer = this.speakingTimers.get(userId);
+		if (timer) {
+			clearTimeout(timer);
+			this.speakingTimers.delete(userId);
+		}
+		this.setSpeakingFor(userId, false);
+	}
+
 	private applyOutputDevice(ctx: AudioContext): void {
 		const deviceId = VoiceSettings.getOutputDeviceId();
 		const sinkId = !deviceId || deviceId === 'default' ? '' : deviceId;
@@ -145,34 +170,54 @@ class EntranceSoundPlaybackEngine {
 		const ctx = this.ensureContext();
 		if (!ctx) return;
 		this.applyOutputDevice(ctx);
+		this.stop(userId);
+		const token = this.playTokens.get(userId);
 		const buffer = await this.fetchAndDecode(url, hash);
-		if (!buffer) return;
-		const listenerVolumePct = EntranceSoundListenerPrefs.getVolume(userId);
-		const outputVolumePct = VoiceSettings.getOutputVolume();
-		const gainValue = Math.max(
-			0,
-			Math.min(3, (listenerVolumePct / 100) * (outputVolumePct / 100) * this.getMasterVolumeMultiplier()),
-		);
+		if (!buffer || this.playTokens.get(userId) !== token) return;
 		try {
 			const source = ctx.createBufferSource();
 			source.buffer = buffer;
 			const gain = ctx.createGain();
-			gain.gain.value = gainValue;
+			gain.gain.value = this.computeGain(userId);
 			source.connect(gain).connect(ctx.destination);
 			this.setSpeakingFor(userId, true);
 			this.scheduleSpeakingRelease(userId, durationMs);
 			source.onended = () => {
-				const timer = this.speakingTimers.get(userId);
-				if (timer) {
-					clearTimeout(timer);
-					this.speakingTimers.delete(userId);
-				}
-				this.setSpeakingFor(userId, false);
+				if (this.activePlaybacks.get(userId)?.source !== source) return;
+				this.activePlaybacks.delete(userId);
+				this.releaseSpeaking(userId);
 			};
 			source.start();
+			this.activePlaybacks.set(userId, {source, gain});
 		} catch (error) {
 			logger.warn('Failed to play entrance sound', {userId, hash, error});
 			this.setSpeakingFor(userId, false);
+		}
+	}
+
+	// One sound per user: a new play replaces the previous one, and bumping the token also drops a play still downloading.
+	stop(userId: string): void {
+		this.playTokens.set(userId, (this.playTokens.get(userId) ?? 0) + 1);
+		const active = this.activePlaybacks.get(userId);
+		if (!active) return;
+		this.activePlaybacks.delete(userId);
+		active.source.stop();
+		this.releaseSpeaking(userId);
+	}
+
+	stopAll(): void {
+		for (const userId of this.playTokens.keys()) {
+			this.stop(userId);
+		}
+	}
+
+	refreshActiveVolumes(): void {
+		for (const [userId, {gain}] of this.activePlaybacks) {
+			if (EntranceSoundListenerPrefs.isMuted(userId)) {
+				this.stop(userId);
+			} else {
+				gain.gain.value = this.computeGain(userId);
+			}
 		}
 	}
 

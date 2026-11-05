@@ -146,8 +146,14 @@ send_voice_server_updates_for_move(GuildId, ChannelId, SessionDataList, GuildPid
     end),
     ok.
 
+%% Clients tear down the old room asynchronously when the move's voice state arrives. A voice
+%% server update landing in that window is discarded and they fall back to the old channel, so
+%% give the teardown time to finish. Clients wait 5 s for this update after the teardown.
+-define(MOVE_VOICE_SERVER_UPDATE_DELAY_MS, 750).
+
 -spec send_captured_voice_server_updates(integer(), integer(), [map()], pid()) -> ok.
 send_captured_voice_server_updates(GuildId, ChannelId, SessionDataList, GuildPid) ->
+    timer:sleep(?MOVE_VOICE_SERVER_UPDATE_DELAY_MS),
     lists:foreach(
         fun(SessionInfo) ->
             guild_voice_move_execute:send_single_voice_server_update(

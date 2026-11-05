@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 export const ENTRANCE_SOUND_MAX_PER_USER = 8;
-export const ENTRANCE_SOUND_MAX_BYTES = 1024 * 1024;
-export const ENTRANCE_SOUND_MAX_DURATION_MS = 5200;
+export const ENTRANCE_SOUND_MAX_BYTES = 4 * 1024 * 1024;
+export const ENTRANCE_SOUND_MAX_DURATION_MS = 20200;
 export const ENTRANCE_SOUND_MIN_DURATION_MS = 100;
 export const ENTRANCE_SOUND_NAME_MAX_LENGTH = 32;
 

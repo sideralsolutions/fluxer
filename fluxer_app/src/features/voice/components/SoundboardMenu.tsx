@@ -2,12 +2,19 @@
 
 import {MenuGroup} from '@app/features/ui/action_menu/MenuGroup';
 import {MenuItem} from '@app/features/ui/action_menu/MenuItem';
+import {MenuItemSlider} from '@app/features/ui/action_menu/MenuItemSlider';
+import Users from '@app/features/user/state/Users';
+import * as NicknameUtils from '@app/features/user/utils/NicknameUtils';
 import {openVoiceVideoSettings} from '@app/features/voice/components/VoiceSettingsMenus';
+import MediaEngine from '@app/features/voice/engine/MediaEngineFacade';
 import Soundboard from '@app/features/voice/engine/Soundboard';
 import EntranceSoundLibrary from '@app/features/voice/state/EntranceSoundLibrary';
+import EntranceSoundListenerPrefs from '@app/features/voice/state/EntranceSoundListenerPrefs';
+import {VOICE_VOLUME_MAX_PERCENT} from '@app/features/voice/utils/VoiceVolumeUtils';
+import {ME} from '@fluxer/constants/src/AppConstants';
 import {msg} from '@lingui/core/macro';
 import {useLingui} from '@lingui/react/macro';
-import {GearIcon, PlayIcon} from '@phosphor-icons/react';
+import {GearIcon, PlayIcon, StopIcon} from '@phosphor-icons/react';
 import {observer} from 'mobx-react-lite';
 import type React from 'react';
 import {useEffect} from 'react';
@@ -28,6 +35,14 @@ const NO_SOUNDS_DESCRIPTOR = msg({
 	message: 'No sounds yet',
 	comment: 'Disabled soundboard menu item shown when the user has not uploaded any sound.',
 });
+const STOP_SOUNDS_DESCRIPTOR = msg({
+	message: 'Stop sounds',
+	comment: "Soundboard menu item that stops every sound playing for you, and the user's own sounds for everyone.",
+});
+const MY_SOUNDS_VOLUME_DESCRIPTOR = msg({
+	message: 'My sounds',
+	comment: "Soundboard menu slider label for the local volume of the user's own sounds.",
+});
 const SOUNDBOARD_UNAVAILABLE_DESCRIPTOR = msg({
 	message: 'Not available in peer-to-peer calls',
 	comment: 'Hint on soundboard sounds when the current voice call is peer-to-peer and cannot carry soundboard plays.',
@@ -37,6 +52,16 @@ interface SoundboardMenuProps {
 	onClose: () => void;
 }
 
+const SoundVolumeSlider: React.FC<{userId: string; label: string}> = observer(({userId, label}) => (
+	<MenuItemSlider
+		label={label}
+		value={EntranceSoundListenerPrefs.getVolume(userId)}
+		maxValue={VOICE_VOLUME_MAX_PERCENT}
+		onChange={(value) => EntranceSoundListenerPrefs.setVolume(userId, value)}
+		data-flx="voice.soundboard-menu.volume-slider"
+	/>
+));
+
 export const SoundboardMenu: React.FC<SoundboardMenuProps> = observer(({onClose}) => {
 	const {i18n} = useLingui();
 	useEffect(() => {
@@ -45,6 +70,12 @@ export const SoundboardMenu: React.FC<SoundboardMenuProps> = observer(({onClose}
 	const sounds = EntranceSoundLibrary.list;
 	const available = Soundboard.available;
 	const placeholder = EntranceSoundLibrary.loaded ? NO_SOUNDS_DESCRIPTOR : LOADING_SOUNDS_DESCRIPTOR;
+	const {guildId, channelId} = MediaEngine;
+	const currentUserId = Users.getCurrentUser()?.id;
+	const voiceStates = channelId ? MediaEngine.getAllVoiceStatesInChannel(guildId ?? ME, channelId) : {};
+	const otherUsers = [...new Set(Object.values(voiceStates).map((state) => state.user_id))]
+		.filter((userId) => userId !== currentUserId)
+		.flatMap((userId) => Users.getUser(userId) ?? []);
 	return (
 		<>
 			<MenuGroup data-flx="voice.soundboard-menu.menu-group">
@@ -67,6 +98,32 @@ export const SoundboardMenu: React.FC<SoundboardMenuProps> = observer(({onClose}
 						{i18n._(placeholder)}
 					</MenuItem>
 				)}
+				<MenuItem
+					icon={<StopIcon weight="fill" data-flx="voice.soundboard-menu.menu-item.stop.icon" />}
+					disabled={!available}
+					closeOnSelect={false}
+					onClick={() => void Soundboard.stop()}
+					data-flx="voice.soundboard-menu.menu-item.stop"
+				>
+					{i18n._(STOP_SOUNDS_DESCRIPTOR)}
+				</MenuItem>
+			</MenuGroup>
+			<MenuGroup data-flx="voice.soundboard-menu.menu-group--volume">
+				{currentUserId && (
+					<SoundVolumeSlider
+						userId={currentUserId}
+						label={i18n._(MY_SOUNDS_VOLUME_DESCRIPTOR)}
+						data-flx="voice.soundboard-menu.sound-volume-slider"
+					/>
+				)}
+				{otherUsers.map((user) => (
+					<SoundVolumeSlider
+						key={user.id}
+						userId={user.id}
+						label={NicknameUtils.getNickname(user, guildId, channelId ?? undefined)}
+						data-flx="voice.soundboard-menu.sound-volume-slider--2"
+					/>
+				))}
 			</MenuGroup>
 			<MenuGroup data-flx="voice.soundboard-menu.menu-group--2">
 				<MenuItem
