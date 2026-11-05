@@ -250,7 +250,7 @@ export const UserRateLimitConfigs = {
 	} as RouteRateLimitConfig,
 	USER_ENTRANCE_SOUND_UPLOAD: {
 		bucket: 'user:entrance_sound:upload',
-		config: {limit: 5, windowMs: ms('5 minutes')},
+		config: {limit: 30, windowMs: ms('5 minutes')},
 	} as RouteRateLimitConfig,
 	USER_ENTRANCE_SOUND_MUTATE: {
 		bucket: 'user:entrance_sound:mutate',

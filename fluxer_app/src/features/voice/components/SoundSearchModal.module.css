@@ -1,0 +1,42 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+
+.body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	padding: 0.5rem 0.25rem 0.25rem;
+}
+
+.list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.name {
+	flex: 1;
+	min-width: 0;
+	font-size: 0.875rem;
+	color: var(--text-primary);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.hint {
+	font-size: 0.75rem;
+	color: var(--text-tertiary);
+	line-height: 1.4;
+}
+
+.center {
+	display: flex;
+	justify-content: center;
+	padding: 1rem;
+}

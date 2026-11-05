@@ -5,6 +5,7 @@ import {MenuItem} from '@app/features/ui/action_menu/MenuItem';
 import {MenuItemSlider} from '@app/features/ui/action_menu/MenuItemSlider';
 import Users from '@app/features/user/state/Users';
 import * as NicknameUtils from '@app/features/user/utils/NicknameUtils';
+import {openSoundSearchModal} from '@app/features/voice/components/SoundSearchModal';
 import {openVoiceVideoSettings} from '@app/features/voice/components/VoiceSettingsMenus';
 import MediaEngine from '@app/features/voice/engine/MediaEngineFacade';
 import Soundboard from '@app/features/voice/engine/Soundboard';
@@ -14,7 +15,7 @@ import {VOICE_VOLUME_MAX_PERCENT} from '@app/features/voice/utils/VoiceVolumeUti
 import {ME} from '@fluxer/constants/src/AppConstants';
 import {msg} from '@lingui/core/macro';
 import {useLingui} from '@lingui/react/macro';
-import {GearIcon, PlayIcon, StopIcon} from '@phosphor-icons/react';
+import {GearIcon, MagnifyingGlassIcon, PlayIcon, StopIcon} from '@phosphor-icons/react';
 import {observer} from 'mobx-react-lite';
 import type React from 'react';
 import {useEffect} from 'react';
@@ -22,6 +23,10 @@ import {useEffect} from 'react';
 export const SOUNDBOARD_DESCRIPTOR = msg({
 	message: 'Soundboard',
 	comment: 'Label of the voice call button that opens the soundboard menu with the sounds you can play to the call.',
+});
+const SEARCH_SOUNDS_DESCRIPTOR = msg({
+	message: 'Search sounds',
+	comment: 'Soundboard menu item that opens the search for new sounds to favorite.',
 });
 const MANAGE_SOUNDS_DESCRIPTOR = msg({
 	message: 'Manage sounds',
@@ -126,6 +131,13 @@ export const SoundboardMenu: React.FC<SoundboardMenuProps> = observer(({onClose}
 				))}
 			</MenuGroup>
 			<MenuGroup data-flx="voice.soundboard-menu.menu-group--2">
+				<MenuItem
+					icon={<MagnifyingGlassIcon weight="bold" data-flx="voice.soundboard-menu.menu-item.search.icon" />}
+					onClick={() => openSoundSearchModal(onClose)}
+					data-flx="voice.soundboard-menu.menu-item.search"
+				>
+					{i18n._(SEARCH_SOUNDS_DESCRIPTOR)}
+				</MenuItem>
 				<MenuItem
 					icon={<GearIcon weight="fill" data-flx="voice.soundboard-menu.menu-item.manage.icon" />}
 					onClick={() => openVoiceVideoSettings(onClose, 'audio')}

@@ -44209,3 +44209,43 @@ msgstr "Parar sons"
 #: src/features/voice/components/SoundboardMenu.tsx
 msgid "My sounds"
 msgstr "Meus sons"
+
+#. Soundboard menu item that opens the search for new sounds to favorite.
+#: src/features/voice/components/SoundSearchModal.tsx
+msgid "Search sounds"
+msgstr "Buscar sons"
+
+#. Placeholder of the soundboard sound search field. Myinstants is a website name.
+#: src/features/voice/components/SoundSearchModal.tsx
+msgid "Search Myinstants…"
+msgstr "Buscar no Myinstants…"
+
+#. Hint at the top of the soundboard sound search.
+#: src/features/voice/components/SoundSearchModal.tsx
+msgid "Sounds from myinstants.com. Favorite one to add it to your soundboard."
+msgstr "Sons do myinstants.com. Favorite um para adicionar à sua mesa de som."
+
+#. Shown when the soundboard sound search has no results.
+#: src/features/voice/components/SoundSearchModal.tsx
+msgid "No sounds found"
+msgstr "Nenhum som encontrado"
+
+#. Shown when the soundboard sound search request fails.
+#: src/features/voice/components/SoundSearchModal.tsx
+msgid "Couldn't search sounds. Try again in a moment."
+msgstr "Não foi possível buscar sons. Tente novamente em instantes."
+
+#. Accessible label of the button that adds a search result to the soundboard, or removes it again.
+#: src/features/voice/components/SoundSearchModal.tsx
+msgid "Favorite sound"
+msgstr "Favoritar som"
+
+#. Toast when adding a sound to the soundboard, or removing it, fails.
+#: src/features/voice/components/SoundSearchModal.tsx
+msgid "Couldn't change this favorite. Try again in a moment."
+msgstr "Não foi possível alterar este favorito. Tente novamente em instantes."
+
+#. Toast when favoriting a sound while the sound library has no free slot.
+#: src/features/voice/components/SoundSearchModal.tsx
+msgid "Your sound library is full. Remove a sound first."
+msgstr "Sua biblioteca de sons está cheia. Remova um som primeiro."

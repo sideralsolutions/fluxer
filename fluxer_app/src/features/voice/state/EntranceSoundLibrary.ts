@@ -9,6 +9,7 @@ import {
 } from '@app/features/notification/utils/EntranceSoundScopes';
 import {http} from '@app/features/platform/transport/RestTransport';
 import {Logger} from '@app/features/platform/utils/AppLogger';
+import {ENTRANCE_SOUND_MAX_PER_USER} from '@fluxer/constants/src/EntranceSoundConstants';
 import {makeAutoObservable, runInAction} from 'mobx';
 
 const logger = new Logger('EntranceSoundLibrary');
@@ -74,6 +75,10 @@ class EntranceSoundLibrary {
 
 	get list(): Array<EntranceSoundEntry> {
 		return Object.values(this.sounds).sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1));
+	}
+
+	get libraryFull(): boolean {
+		return this.list.length >= ENTRANCE_SOUND_MAX_PER_USER;
 	}
 
 	getById(soundId: string | null | undefined): EntranceSoundEntry | null {

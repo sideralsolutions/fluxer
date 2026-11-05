@@ -41,6 +41,7 @@ class EntranceSoundPlaybackEngine {
 	private lastAppliedSinkId: string | null = null;
 	private activePlaybacks: Map<string, ActivePlayback> = new Map();
 	private playTokens: Map<string, number> = new Map();
+	private previewSource: AudioBufferSourceNode | null = null;
 
 	private ensureContext(): AudioContext | null {
 		if (typeof window === 'undefined') return null;
@@ -221,7 +222,8 @@ class EntranceSoundPlaybackEngine {
 		}
 	}
 
-	playPreview(buffer: AudioBuffer): void {
+	playPreview(buffer: AudioBuffer, onEnded?: () => void): void {
+		this.stopPreview();
 		const ctx = this.ensureContext();
 		if (!ctx) return;
 		try {
@@ -230,10 +232,23 @@ class EntranceSoundPlaybackEngine {
 			const gain = ctx.createGain();
 			gain.gain.value = Math.max(0, Math.min(3, VoiceSettings.getOutputVolume() / 100));
 			source.connect(gain).connect(ctx.destination);
+			source.onended = () => {
+				this.previewSource = null;
+				onEnded?.();
+			};
 			source.start();
+			this.previewSource = source;
 		} catch (error) {
 			logger.warn('Failed to play preview', {error});
 		}
+	}
+
+	stopPreview(): void {
+		const source = this.previewSource;
+		if (!source) return;
+		this.previewSource = null;
+		source.onended = null;
+		source.stop();
 	}
 
 	async fetchBuffer(url: string, hash: string): Promise<AudioBuffer | null> {
