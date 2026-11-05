@@ -1,17 +1,30 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+import Accessibility from '@app/features/accessibility/state/Accessibility';
 import * as Modal from '@app/features/app/components/dialogs/Modal';
 import RuntimeConfig from '@app/features/app/state/RuntimeConfig';
 import {Button} from '@app/features/ui/button/Button';
 import * as ModalCommands from '@app/features/ui/commands/ModalCommands';
+import {Avatar} from '@app/features/ui/components/Avatar';
+import {Input} from '@app/features/ui/components/form/FormInput';
 import {Spinner} from '@app/features/ui/components/Spinner';
 import Users from '@app/features/user/state/Users';
 import * as NicknameUtils from '@app/features/user/utils/NicknameUtils';
+import {
+	type Card,
+	type GameView,
+	type TablePlay,
+	type TableView,
+	trucoSoundsBetween,
+} from '@app/features/voice/components/TrucoEvents';
 import styles from '@app/features/voice/components/TrucoModal.module.css';
+import trucoSounds, {DEAL_STEP_MS} from '@app/features/voice/components/TrucoSounds';
 import MediaEngine from '@app/features/voice/engine/MediaEngineFacade';
 import voiceEngineV2AppConnectionHostAdapter from '@app/features/voice/engine/v2/VoiceEngineV2AppConnectionHostAdapter';
+import type {I18n} from '@lingui/core';
 import {msg} from '@lingui/core/macro';
 import {useLingui} from '@lingui/react/macro';
+import {RobotIcon, SpeakerHighIcon, SpeakerSlashIcon} from '@phosphor-icons/react';
 import {clsx} from 'clsx';
 import {observer} from 'mobx-react-lite';
 import type React from 'react';
@@ -19,7 +32,15 @@ import {useCallback, useEffect, useRef, useState} from 'react';
 
 const RECONNECT_DELAY_MS = 2000;
 const UNAUTHORIZED_CLOSE_CODE = 4001;
-const SUIT_SYMBOLS: Record<string, string> = {ouros: '♦', espadas: '♠', copas: '♥', paus: '♣'};
+const TEAM_NAME_MAX_LENGTH = 20;
+const AVATAR_SIZE = 40;
+const PLAY_RADIUS = 21;
+const SEAT_RADIUS = 41;
+const CARDS_PER_PLAYER = 3;
+const CONFETTI_PIECES = 60;
+const SHAKE_KEYFRAMES = [0, -10, 9, -7, 5, -3, 0].map((x) => ({transform: `translateX(${x}px)`}));
+// O seletor de variação mantém os naipes como texto: sem ele, parte dos sistemas desenha emoji.
+const SUIT_SYMBOLS: Record<string, string> = {ouros: '♦\uFE0E', espadas: '♠\uFE0E', copas: '♥\uFE0E', paus: '♣\uFE0E'};
 const RED_SUITS = new Set(['ouros', 'copas']);
 
 export const TRUCO_DESCRIPTOR = msg({
@@ -41,6 +62,12 @@ const CONNECTION_LOST_DESCRIPTOR = msg({
 const MODE_4_DESCRIPTOR = msg({message: '2 vs 2', comment: 'Truco table size: two teams of two players.'});
 const MODE_6_DESCRIPTOR = msg({message: '3 vs 3', comment: 'Truco table size: two teams of three players.'});
 const TEAM_DESCRIPTOR = msg({message: 'Team {team}', comment: 'Truco team name. {team} is 1 or 2.'});
+const TEAM_NAME_DESCRIPTOR = msg({
+	message: 'Team name',
+	comment: 'Accessible label of the field that names a truco team.',
+});
+const MUTE_DESCRIPTOR = msg({message: 'Mute table sounds', comment: 'Button that silences the truco game.'});
+const UNMUTE_DESCRIPTOR = msg({message: 'Unmute table sounds', comment: 'Button that brings back the truco sounds.'});
 const SIT_DESCRIPTOR = msg({message: 'Sit here', comment: 'Button that takes an empty seat at the truco table.'});
 const LEAVE_SEAT_DESCRIPTOR = msg({message: 'Leave seat', comment: 'Button that leaves a seat at the truco table.'});
 const START_DESCRIPTOR = msg({message: 'Start game', comment: 'Button that starts a truco game.'});
@@ -53,8 +80,8 @@ const END_GAME_DESCRIPTOR = msg({
 	comment: 'Button that ends the running truco game for everyone.',
 });
 const WON_DESCRIPTOR = msg({
-	message: 'Team {team} won {winner} to {loser}',
-	comment: 'Result of the last truco game. {team} is 1 or 2, the others are final scores.',
+	message: '{team} won {winner} to {loser}',
+	comment: 'Result of the last truco game. {team} is the name of the team, the others are final scores.',
 });
 const YOUR_TURN_DESCRIPTOR = msg({message: 'Your turn', comment: 'Truco status when the user must play.'});
 const WAITING_DESCRIPTOR = msg({
@@ -81,8 +108,8 @@ const ELEVEN_DESCRIPTOR = msg({
 });
 const ELEVEN_PLAY_DESCRIPTOR = msg({message: 'Play the hand', comment: 'Truco answer that plays the hand of eleven.'});
 const ELEVEN_WAIT_DESCRIPTOR = msg({
-	message: 'Team {team} is deciding the hand of eleven',
-	comment: 'Truco status while the team with 11 points decides.',
+	message: '{team} is deciding the hand of eleven',
+	comment: 'Truco status while the team with 11 points decides. {team} is the name of the team.',
 });
 const IRON_DESCRIPTOR = msg({
 	message: 'Iron hand: everyone plays blind',
@@ -93,8 +120,8 @@ const FACE_DOWN_DESCRIPTOR = msg({
 	comment: 'Truco toggle: the next card is played hidden and loses to any other card.',
 });
 const SCORED_DESCRIPTOR = msg({
-	message: 'Team {team} scored {points}',
-	comment: 'Truco status at the end of a hand.',
+	message: '{team} scored {points}',
+	comment: 'Truco status at the end of a hand. {team} is the name of the team.',
 });
 const WATCHING_DESCRIPTOR = msg({
 	message: 'You are watching. Take the seat of a bot to play.',
@@ -112,53 +139,6 @@ const PARTNER_DESCRIPTOR = msg({
 	message: 'Partner:',
 	comment: 'Label before the cards of the partner, shown in the truco hand of eleven.',
 });
-
-interface Card {
-	rank: string;
-	suit: string;
-}
-
-interface TablePlay {
-	seat: number;
-	hidden: boolean;
-	card: Card | null;
-}
-
-interface GameView {
-	players: number;
-	score: [number, number];
-	vira: Card;
-	manilha: string;
-	turn: number;
-	value: number;
-	phase: 'play' | 'raise' | 'eleven' | 'ended';
-	raise: {by: number; seat: number; proposed: number; awaiting: number} | null;
-	elevenTeam: number | null;
-	blind: boolean;
-	ended: {team: number; points: number; reason: string} | null;
-	canRaise: boolean;
-	canHide: boolean;
-	lastTrick: Array<TablePlay>;
-	table: Array<TablePlay>;
-	hand: Array<Card | null>;
-	cardCounts: Array<number>;
-	partners: Array<{seat: number; cards: Array<Card>}>;
-}
-
-interface SeatView {
-	name: string;
-	bot: boolean;
-	online: boolean;
-}
-
-interface TableView {
-	players: number;
-	seats: Array<SeatView | null>;
-	you: number | null;
-	lastResult: {score: [number, number]; winner: number} | null;
-	game: GameView | null;
-	actingSeat: number | null;
-}
 
 type ConnectionStatus = 'unavailable' | 'connecting' | 'open' | 'lost';
 type TrucoSend = (message: Record<string, unknown>) => void;
@@ -217,35 +197,97 @@ function useTrucoTable(): {state: TableView | null; status: ConnectionStatus; se
 	return {state, status, send};
 }
 
-function PlayingCard({card, manilha, small}: {card: Card | null; manilha?: string; small?: boolean}) {
-	if (!card)
-		return (
+function cardClasses(card: Card | null, manilha?: string) {
+	if (!card) return clsx(styles.card, styles.cardBack);
+	return clsx(styles.card, RED_SUITS.has(card.suit) && styles.cardRed, card.rank === manilha && styles.cardManilha);
+}
+
+function CardFace({card}: {card: Card}) {
+	const suit = SUIT_SYMBOLS[card.suit];
+	return (
+		<>
+			<span className={styles.cardCorner} data-flx="voice.truco-modal.card-face.card-corner">
+				<span data-flx="voice.truco-modal.card-face.span">{card.rank}</span>
+				<span data-flx="voice.truco-modal.card-face.span--2">{suit}</span>
+			</span>
+			<span className={styles.cardPip} data-flx="voice.truco-modal.card-face.card-pip">
+				{suit}
+			</span>
 			<span
-				className={clsx(styles.card, styles.cardBack, small && styles.cardSmall)}
-				data-flx="voice.truco-modal.playing-card.card"
-			/>
-		);
+				className={clsx(styles.cardCorner, styles.cardCornerBottom)}
+				data-flx="voice.truco-modal.card-face.card-corner--2"
+			>
+				<span data-flx="voice.truco-modal.card-face.span--3">{card.rank}</span>
+				<span data-flx="voice.truco-modal.card-face.span--4">{suit}</span>
+			</span>
+		</>
+	);
+}
+
+function PlayingCard({card, manilha, small}: {card: Card | null; manilha?: string; small?: boolean}) {
 	return (
 		<span
-			className={clsx(
-				styles.card,
-				small && styles.cardSmall,
-				RED_SUITS.has(card.suit) && styles.cardRed,
-				card.rank === manilha && styles.cardManilha,
-			)}
-			data-flx="voice.truco-modal.playing-card.card--2"
+			className={clsx(cardClasses(card, manilha), small && styles.cardSmall)}
+			data-flx="voice.truco-modal.playing-card.card"
 		>
-			<span data-flx="voice.truco-modal.playing-card.span">{card.rank}</span>
-			<span data-flx="voice.truco-modal.playing-card.span--2">{SUIT_SYMBOLS[card.suit]}</span>
+			{card ? <CardFace card={card} data-flx="voice.truco-modal.playing-card.card-face" /> : null}
 		</span>
 	);
 }
 
-// Assento na borda da mesa, com quem joga sempre embaixo: 0 é o próprio jogador, e o resto segue em volta.
-function seatPosition(seat: number, you: number | null, players: number, radius: number) {
-	const relative = (seat - (you ?? 0) + players) % players;
-	const angle = Math.PI / 2 + (relative / players) * 2 * Math.PI;
-	return {left: `${50 + Math.cos(angle) * radius}%`, top: `${50 + Math.sin(angle) * radius}%`};
+const teamClass = (team: number) => (team === 0 ? styles.teamA : styles.teamB);
+
+function teamLabel(i18n: I18n, names: TableView['teamNames'], team: number) {
+	return names[team] || i18n._(TEAM_DESCRIPTOR, {team: team + 1});
+}
+
+// Posição em relação ao jogador, que fica sempre embaixo: 0 é ele, e o resto segue em volta da mesa.
+const relativeSeat = (seat: number, you: number | null, players: number) => (seat - (you ?? 0) + players) % players;
+
+function seatPoint(seat: number, you: number | null, players: number, radius: number) {
+	const angle = Math.PI / 2 + (relativeSeat(seat, you, players) / players) * 2 * Math.PI;
+	return {x: 50 + Math.cos(angle) * radius, y: 50 + Math.sin(angle) * radius};
+}
+
+const dealDelay = (round: number, relative: number, players: number) =>
+	`${(round * players + relative) * DEAL_STEP_MS}ms`;
+
+function TeamNameField({state, team, send}: {state: TableView; team: number; send: TrucoSend}) {
+	const {i18n} = useLingui();
+	const name = state.teamNames[team];
+	if (state.you === null || state.you % 2 !== team) {
+		return (
+			<span className={styles.lobbyTeamName} data-flx="voice.truco-modal.team-name-field.lobby-team-name">
+				{teamLabel(i18n, state.teamNames, team)}
+			</span>
+		);
+	}
+	return (
+		<Input
+			key={name}
+			defaultValue={name}
+			maxLength={TEAM_NAME_MAX_LENGTH}
+			aria-label={i18n._(TEAM_NAME_DESCRIPTOR)}
+			placeholder={i18n._(TEAM_DESCRIPTOR, {team: team + 1})}
+			onBlur={(event) => {
+				if (event.target.value.trim() !== name) send({t: 'teamName', team, name: event.target.value});
+			}}
+			onKeyDown={(event) => {
+				if (event.key === 'Enter') event.currentTarget.blur();
+			}}
+			data-flx="voice.truco-modal.team-name-field.input"
+		/>
+	);
+}
+
+function SeatAvatar({userId, name, bot}: {userId: string | null; name: string; bot: boolean}) {
+	const user = userId ? Users.getUser(userId) : undefined;
+	if (user) return <Avatar user={user} size={AVATAR_SIZE} data-flx="voice.truco-modal.seat-avatar.avatar" />;
+	return (
+		<span className={styles.avatarFallback} data-flx="voice.truco-modal.seat-avatar.avatar-fallback">
+			{bot ? <RobotIcon weight="fill" data-flx="voice.truco-modal.seat-avatar.robot-icon" /> : name.charAt(0)}
+		</span>
+	);
 }
 
 function Lobby({state, send}: {state: TableView; send: TrucoSend}) {
@@ -270,10 +312,12 @@ function Lobby({state, send}: {state: TableView; send: TrucoSend}) {
 			</div>
 			<div className={styles.lobbySeats} data-flx="voice.truco-modal.lobby.lobby-seats">
 				{[0, 1].map((team) => (
-					<div key={team} className={styles.lobbyTeam} data-flx="voice.truco-modal.lobby.lobby-team">
-						<span className={styles.lobbyTeamName} data-flx="voice.truco-modal.lobby.lobby-team-name">
-							{i18n._(TEAM_DESCRIPTOR, {team: team + 1})}
-						</span>
+					<div
+						key={team}
+						className={clsx(styles.lobbyTeam, teamClass(team))}
+						data-flx="voice.truco-modal.lobby.lobby-team"
+					>
+						<TeamNameField state={state} team={team} send={send} data-flx="voice.truco-modal.lobby.team-name-field" />
 						{seatsOf(team).map(({seat, index}) =>
 							seat ? (
 								<Button
@@ -307,7 +351,7 @@ function Lobby({state, send}: {state: TableView; send: TrucoSend}) {
 			{state.lastResult ? (
 				<p className={styles.status} data-flx="voice.truco-modal.lobby.status">
 					{i18n._(WON_DESCRIPTOR, {
-						team: state.lastResult.winner + 1,
+						team: teamLabel(i18n, state.teamNames, state.lastResult.winner),
 						winner: state.lastResult.score[state.lastResult.winner],
 						loser: state.lastResult.score[1 - state.lastResult.winner],
 					})}
@@ -322,95 +366,297 @@ function Lobby({state, send}: {state: TableView; send: TrucoSend}) {
 	);
 }
 
+function TrickMarkers({results}: {results: GameView['trickResults']}) {
+	return (
+		<div className={styles.tricks} aria-hidden data-flx="voice.truco-modal.trick-markers.tricks">
+			{[0, 1, 2].map((trick) => {
+				const result = results[trick];
+				return (
+					<span
+						key={trick}
+						className={clsx(
+							styles.trick,
+							typeof result === 'number' && [styles.trickDone, teamClass(result)],
+							result === 'tie' && styles.trickTied,
+						)}
+						data-flx="voice.truco-modal.trick-markers.trick"
+					/>
+				);
+			})}
+		</div>
+	);
+}
+
+function Confetti({team}: {team: number}) {
+	return (
+		<div className={clsx(styles.confetti, teamClass(team))} aria-hidden data-flx="voice.truco-modal.confetti.confetti">
+			{Array.from({length: CONFETTI_PIECES}, (_, piece) => (
+				<i
+					key={piece}
+					style={
+						{
+							'--left': `${(piece * 37) % 100}%`,
+							'--delay': `${(piece * 53) % 900}ms`,
+							'--spin': `${180 + ((piece * 71) % 540)}deg`,
+						} as React.CSSProperties
+					}
+					data-flx="voice.truco-modal.confetti.i"
+				/>
+			))}
+		</div>
+	);
+}
+
+function PlayOnTable({
+	play,
+	game,
+	you,
+	trickOver,
+}: {
+	play: TablePlay;
+	game: GameView;
+	you: number | null;
+	trickOver: boolean;
+}) {
+	const from = seatPoint(play.seat, you, game.players, SEAT_RADIUS);
+	const to = seatPoint(play.seat, you, game.players, PLAY_RADIUS);
+	const winner = game.lastTrickWinner === null ? null : seatPoint(game.lastTrickWinner, you, game.players, SEAT_RADIUS);
+	const style = {
+		'--from-left': `${from.x}%`,
+		'--from-top': `${from.y}%`,
+		'--to-left': `${to.x}%`,
+		'--to-top': `${to.y}%`,
+		'--win-left': `${winner?.x ?? 50}%`,
+		'--win-top': `${winner?.y ?? 50}%`,
+		'--tilt': `${((play.seat * 37) % 13) - 6}deg`,
+	} as React.CSSProperties;
+	return (
+		<div
+			className={clsx(
+				styles.play,
+				trickOver && styles.playCollected,
+				trickOver && play.seat === game.lastTrickWinner && styles.playWinner,
+			)}
+			style={style}
+			data-flx="voice.truco-modal.play-on-table.play"
+		>
+			<PlayingCard
+				card={play.card}
+				manilha={game.manilha}
+				small
+				data-flx="voice.truco-modal.play-on-table.playing-card"
+			/>
+		</div>
+	);
+}
+
 function GameTable({state, game, send}: {state: TableView; game: GameView; send: TrucoSend}) {
 	const {i18n} = useLingui();
 	const [faceDown, setFaceDown] = useState(false);
-	const {you, seats} = state;
+	const [muted, setMuted] = useState(trucoSounds.muted);
+	const tableRef = useRef<HTMLDivElement>(null);
+	const {you, seats, teamNames} = state;
+	const {players, handNumber} = game;
 	const yourTeam = you === null ? null : you % 2;
 	const canPlay = game.phase === 'play' && game.turn === you;
 	const canAnswer = game.phase === 'raise' && game.raise?.awaiting === yourTeam;
 	const canDecideEleven = game.phase === 'eleven' && game.elevenTeam === yourTeam;
-	const shownPlays = game.phase === 'ended' && game.table.length === 0 ? game.lastTrick : game.table;
+	const trickOver = game.table.length === 0;
+	const shownPlays = trickOver ? game.lastTrick : game.table;
+	// A carta que fecha a vaza chega junto com o resultado: a mesma chave deixa as outras paradas no lugar.
+	const trickNumber = game.trickResults.length - (trickOver ? 1 : 0);
 	const action = (body: Record<string, unknown>) => send({t: 'action', action: body});
 	const actingName = state.actingSeat === null ? '' : (seats[state.actingSeat]?.name ?? '');
+	const proposed = game.raise?.proposed;
+
+	useEffect(() => {
+		if (proposed && !Accessibility.useReducedMotion) tableRef.current?.animate(SHAKE_KEYFRAMES, {duration: 480});
+	}, [proposed]);
 
 	let status: string;
 	if (game.ended) {
-		status = i18n._(SCORED_DESCRIPTOR, {team: game.ended.team + 1, points: game.ended.points});
+		status = i18n._(SCORED_DESCRIPTOR, {team: teamLabel(i18n, teamNames, game.ended.team), points: game.ended.points});
 	} else if (game.phase === 'raise' && game.raise) {
 		status = i18n._(CALLED_DESCRIPTOR, {name: seats[game.raise.seat]?.name ?? '', value: game.raise.proposed});
 	} else if (canDecideEleven) {
 		status = i18n._(ELEVEN_DESCRIPTOR);
 	} else if (game.phase === 'eleven') {
-		status = i18n._(ELEVEN_WAIT_DESCRIPTOR, {team: (game.elevenTeam ?? 0) + 1});
+		status = i18n._(ELEVEN_WAIT_DESCRIPTOR, {team: teamLabel(i18n, teamNames, game.elevenTeam ?? 0)});
 	} else if (canPlay) {
 		status = i18n._(YOUR_TURN_DESCRIPTOR);
 	} else {
 		status = i18n._(WAITING_DESCRIPTOR, {name: actingName});
 	}
 
+	let banner: {key: string; text: string; large: boolean} | null = null;
+	if (game.winner !== null) {
+		const text = i18n._(WON_DESCRIPTOR, {
+			team: teamLabel(i18n, teamNames, game.winner),
+			winner: game.score[game.winner],
+			loser: game.score[1 - game.winner],
+		});
+		banner = {key: 'won', text, large: false};
+	} else if (game.ended) {
+		banner = {key: `ended:${handNumber}`, text: status, large: false};
+	} else if (proposed) {
+		const text = i18n._(RAISE_DESCRIPTORS[proposed as keyof typeof RAISE_DESCRIPTORS]);
+		banner = {key: `raise:${handNumber}:${proposed}`, text, large: true};
+	}
+
+	const turnKey = [handNumber, game.trickResults.length, game.table.length, game.phase, proposed, state.actingSeat];
 	const raiseAfterProposed = game.raise ? NEXT_RAISE[game.raise.proposed] : undefined;
 	const nextRaise = NEXT_RAISE[game.value];
+	const dealEnd = `${players * CARDS_PER_PLAYER * DEAL_STEP_MS}ms`;
 	return (
 		<>
 			<div className={styles.topBar} data-flx="voice.truco-modal.game-table.top-bar">
 				<div className={styles.score} data-flx="voice.truco-modal.game-table.score">
 					{[0, 1].map((team) => (
-						<span
+						<div
 							key={team}
-							className={clsx(team === yourTeam && styles.teamYou)}
-							data-flx="voice.truco-modal.game-table.team-you"
+							className={clsx(styles.teamScore, teamClass(team), team === yourTeam && styles.teamYou)}
+							data-flx="voice.truco-modal.game-table.team-score"
 						>
-							{i18n._(TEAM_DESCRIPTOR, {team: team + 1})}: {game.score[team]}
-						</span>
+							<span className={styles.teamScoreName} data-flx="voice.truco-modal.game-table.team-score-name">
+								{teamLabel(i18n, teamNames, team)}
+							</span>
+							<span
+								key={`score:${game.score[team]}`}
+								className={styles.teamScoreValue}
+								data-flx="voice.truco-modal.game-table.team-score-value"
+							>
+								{game.score[team]}
+							</span>
+							{game.ended?.team === team ? (
+								<span
+									key={`points:${handNumber}`}
+									className={styles.pointsPop}
+									data-flx="voice.truco-modal.game-table.points-pop"
+								>
+									+{game.ended.points}
+								</span>
+							) : null}
+						</div>
 					))}
 				</div>
-				<span data-flx="voice.truco-modal.game-table.span">{i18n._(HAND_VALUE_DESCRIPTOR, {value: game.value})}</span>
-				<Button
-					small
-					variant="secondary"
-					disabled={you === null}
-					onClick={() => send({t: 'stop'})}
-					data-flx="voice.truco-modal.game-table.button.send"
-				>
-					{i18n._(END_GAME_DESCRIPTOR)}
-				</Button>
+				<TrickMarkers results={game.trickResults} data-flx="voice.truco-modal.game-table.trick-markers" />
+				<div className={styles.topActions} data-flx="voice.truco-modal.game-table.top-actions">
+					<Button
+						square
+						small
+						variant="secondary"
+						aria-label={i18n._(muted ? UNMUTE_DESCRIPTOR : MUTE_DESCRIPTOR)}
+						icon={
+							muted ? (
+								<SpeakerSlashIcon data-flx="voice.truco-modal.game-table.speaker-slash-icon" />
+							) : (
+								<SpeakerHighIcon data-flx="voice.truco-modal.game-table.speaker-high-icon" />
+							)
+						}
+						onClick={() => {
+							trucoSounds.muted = !muted;
+							setMuted(!muted);
+						}}
+						data-flx="voice.truco-modal.game-table.button.set-muted"
+					/>
+					<Button
+						small
+						variant="secondary"
+						disabled={you === null}
+						onClick={() => send({t: 'stop'})}
+						data-flx="voice.truco-modal.game-table.button.send"
+					>
+						{i18n._(END_GAME_DESCRIPTOR)}
+					</Button>
+				</div>
 			</div>
-			<div className={styles.table} data-flx="voice.truco-modal.game-table.table">
-				<div className={styles.vira} data-flx="voice.truco-modal.game-table.vira">
-					<PlayingCard card={game.vira} small data-flx="voice.truco-modal.game-table.playing-card" />
-					<span data-flx="voice.truco-modal.game-table.span--2">{i18n._(VIRA_DESCRIPTOR)}</span>
+			<div ref={tableRef} className={styles.table} data-flx="voice.truco-modal.game-table.table">
+				<div className={styles.tableCenter} data-flx="voice.truco-modal.game-table.table-center">
+					<div
+						key={`vira:${handNumber}`}
+						className={styles.vira}
+						style={{'--deal-end': dealEnd} as React.CSSProperties}
+						data-flx="voice.truco-modal.game-table.vira"
+					>
+						<PlayingCard card={game.vira} small data-flx="voice.truco-modal.game-table.playing-card" />
+						<span data-flx="voice.truco-modal.game-table.span">{i18n._(VIRA_DESCRIPTOR)}</span>
+					</div>
+					<span
+						key={`chip:${game.value}`}
+						className={styles.chip}
+						title={i18n._(HAND_VALUE_DESCRIPTOR, {value: game.value})}
+						data-flx="voice.truco-modal.game-table.chip"
+					>
+						{game.value}
+					</span>
 				</div>
 				{shownPlays.map((play) => (
-					<div
-						key={play.seat}
-						className={styles.play}
-						style={seatPosition(play.seat, you, game.players, 24)}
-						data-flx="voice.truco-modal.game-table.play"
-					>
-						<PlayingCard
-							card={play.card}
-							manilha={game.manilha}
-							small
-							data-flx="voice.truco-modal.game-table.playing-card--2"
-						/>
-					</div>
+					<PlayOnTable
+						key={`${handNumber}:${trickNumber}:${play.seat}`}
+						play={play}
+						game={game}
+						you={you}
+						trickOver={trickOver}
+						data-flx="voice.truco-modal.game-table.play-on-table"
+					/>
 				))}
-				{seats.map((seat, index) =>
-					seat ? (
+				{seats.map((seat, index) => {
+					if (!seat) return null;
+					const point = seatPoint(index, you, players, SEAT_RADIUS);
+					const relative = relativeSeat(index, you, players);
+					const acting = state.actingSeat === index;
+					const canTakeSeat = you === null && seat.bot;
+					return (
 						<div
 							key={index}
-							className={clsx(styles.seat, state.actingSeat === index && styles.seatActive)}
-							style={seatPosition(index, you, game.players, 42)}
+							className={clsx(
+								styles.seat,
+								teamClass(index % 2),
+								acting && styles.seatActive,
+								!seat.online && styles.seatAway,
+							)}
+							style={{left: `${point.x}%`, top: `${point.y}%`}}
 							data-flx="voice.truco-modal.game-table.seat"
 						>
+							<span className={styles.seatAvatar} data-flx="voice.truco-modal.game-table.seat-avatar">
+								<SeatAvatar
+									userId={seat.userId}
+									name={seat.name}
+									bot={seat.bot}
+									data-flx="voice.truco-modal.game-table.seat-avatar--2"
+								/>
+							</span>
 							<span className={styles.seatName} data-flx="voice.truco-modal.game-table.seat-name">
 								{seat.name}
 							</span>
-							<span className={styles.seatMeta} data-flx="voice.truco-modal.game-table.seat-meta">
-								{i18n._(TEAM_DESCRIPTOR, {team: (index % 2) + 1})} · {game.cardCounts[index]}🂠
-							</span>
-							{you === null && seat.bot ? (
+							{acting && !seat.bot && seat.online ? (
+								<span
+									key={turnKey.join(':')}
+									className={styles.turnBar}
+									style={{'--turn-ms': `${state.turnMs}ms`} as React.CSSProperties}
+									data-flx="voice.truco-modal.game-table.turn-bar"
+								/>
+							) : null}
+							{relative !== 0 && !canTakeSeat ? (
+								<span className={styles.fan} data-flx="voice.truco-modal.game-table.fan">
+									{Array.from({length: game.cardCounts[index]}, (_, card) => (
+										<span
+											key={`${handNumber}:${card}`}
+											className={styles.fanCard}
+											style={
+												{
+													'--deal-x': 50 - point.x,
+													'--deal-y': 50 - point.y,
+													'--deal-delay': dealDelay(card, relative, players),
+													'--fan-tilt': `${(card - (game.cardCounts[index] - 1) / 2) * 12}deg`,
+												} as React.CSSProperties
+											}
+											data-flx="voice.truco-modal.game-table.fan-card"
+										/>
+									))}
+								</span>
+							) : null}
+							{canTakeSeat ? (
 								<Button
 									small
 									variant="secondary"
@@ -421,8 +667,20 @@ function GameTable({state, game, send}: {state: TableView; game: GameView; send:
 								</Button>
 							) : null}
 						</div>
-					) : null,
-				)}
+					);
+				})}
+				{banner ? (
+					<div className={styles.banner} data-flx="voice.truco-modal.game-table.banner">
+						<span
+							key={banner.key}
+							className={clsx(styles.bannerText, banner.large && styles.bannerLarge)}
+							data-flx="voice.truco-modal.game-table.banner-text"
+						>
+							{banner.text}
+						</span>
+					</div>
+				) : null}
+				{game.winner !== null ? <Confetti team={game.winner} data-flx="voice.truco-modal.game-table.confetti" /> : null}
 			</div>
 			<p className={styles.status} data-flx="voice.truco-modal.game-table.status">
 				{game.blind ? `${i18n._(IRON_DESCRIPTOR)} · ${status}` : status}
@@ -446,17 +704,13 @@ function GameTable({state, game, send}: {state: TableView; game: GameView; send:
 					))}
 				</div>
 			))}
-			<div className={styles.hand} data-flx="voice.truco-modal.game-table.hand">
+			<div className={clsx(styles.hand, canPlay && styles.handActive)} data-flx="voice.truco-modal.game-table.hand">
 				{game.hand.map((card, index) => (
 					<button
-						key={card ? `${card.rank}${card.suit}` : index}
+						key={`${handNumber}:${card ? `${card.rank}${card.suit}` : index}`}
 						type="button"
-						className={clsx(
-							styles.card,
-							card && RED_SUITS.has(card.suit) && styles.cardRed,
-							card?.rank === game.manilha && styles.cardManilha,
-							!card && styles.cardBack,
-						)}
+						className={cardClasses(card, game.manilha)}
+						style={{'--deal-delay': dealDelay(index, 0, players)} as React.CSSProperties}
 						disabled={!canPlay}
 						onClick={() => {
 							action({type: 'play', index, hidden: faceDown && game.canHide});
@@ -464,12 +718,7 @@ function GameTable({state, game, send}: {state: TableView; game: GameView; send:
 						}}
 						data-flx="voice.truco-modal.game-table.card.action.button"
 					>
-						{card ? (
-							<>
-								<span data-flx="voice.truco-modal.game-table.span--4">{card.rank}</span>
-								<span data-flx="voice.truco-modal.game-table.span--5">{SUIT_SYMBOLS[card.suit]}</span>
-							</>
-						) : null}
+						{card ? <CardFace card={card} data-flx="voice.truco-modal.game-table.card-face" /> : null}
 					</button>
 				))}
 			</div>
@@ -544,6 +793,11 @@ function GameTable({state, game, send}: {state: TableView; game: GameView; send:
 const TrucoModal: React.FC = observer(() => {
 	const {i18n} = useLingui();
 	const {state, status, send} = useTrucoTable();
+	const previousState = useRef<TableView | null>(null);
+	useEffect(() => {
+		if (state) trucoSounds.play(trucoSoundsBetween(previousState.current, state), state.players);
+		previousState.current = state;
+	}, [state]);
 	let content: React.ReactNode;
 	if (status === 'unavailable') {
 		content = (

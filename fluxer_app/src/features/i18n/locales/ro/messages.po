@@ -44280,6 +44280,21 @@ msgstr "2 vs 2"
 msgid "3 vs 3"
 msgstr "3 vs 3"
 
+#. Accessible label of the field that names a truco team.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Team name"
+msgstr "Team name"
+
+#. Button that silences the truco game.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Mute table sounds"
+msgstr "Mute table sounds"
+
+#. Button that brings back the truco sounds.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Unmute table sounds"
+msgstr "Unmute table sounds"
+
 #. Truco team name. {team} is 1 or 2.
 #: src/features/voice/components/TrucoModal.tsx
 msgid "Team {team}"
@@ -44310,10 +44325,10 @@ msgstr "Bots fill the empty seats."
 msgid "End game"
 msgstr "End game"
 
-#. Result of the last truco game. {team} is 1 or 2, the others are final scores.
+#. Result of the last truco game. {team} is the name of the team, the others are final scores.
 #: src/features/voice/components/TrucoModal.tsx
-msgid "Team {team} won {winner} to {loser}"
-msgstr "Team {team} won {winner} to {loser}"
+msgid "{team} won {winner} to {loser}"
+msgstr "{team} won {winner} to {loser}"
 
 #. Truco status when the user must play.
 #: src/features/voice/components/TrucoModal.tsx
@@ -44375,10 +44390,10 @@ msgstr "Hand of eleven: play for 3 points or fold and give 1?"
 msgid "Play the hand"
 msgstr "Play the hand"
 
-#. Truco status while the team with 11 points decides.
+#. Truco status while the team with 11 points decides. {team} is the name of the team.
 #: src/features/voice/components/TrucoModal.tsx
-msgid "Team {team} is deciding the hand of eleven"
-msgstr "Team {team} is deciding the hand of eleven"
+msgid "{team} is deciding the hand of eleven"
+msgstr "{team} is deciding the hand of eleven"
 
 #. Truco status when both teams have 11 points and nobody can see their cards.
 #: src/features/voice/components/TrucoModal.tsx
@@ -44390,10 +44405,10 @@ msgstr "Iron hand: everyone plays blind"
 msgid "Play face down"
 msgstr "Play face down"
 
-#. Truco status at the end of a hand.
+#. Truco status at the end of a hand. {team} is the name of the team.
 #: src/features/voice/components/TrucoModal.tsx
-msgid "Team {team} scored {points}"
-msgstr "Team {team} scored {points}"
+msgid "{team} scored {points}"
+msgstr "{team} scored {points}"
 
 #. Truco status for someone without a seat in the running game.
 #: src/features/voice/components/TrucoModal.tsx
