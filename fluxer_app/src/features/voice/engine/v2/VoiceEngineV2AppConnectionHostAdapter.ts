@@ -214,6 +214,7 @@ class VoiceEngineV2AppConnectionHostAdapter extends Store {
 	private throttle = new VoiceConnectionThrottle();
 	private reconnect = new VoiceEngineV2AppReconnectPolicy();
 	private voiceServerTimeoutSub: Subscription | null = null;
+	latestVoiceToken: string | null = null;
 	private hotSwapTimeoutSub: Subscription | null = null;
 	private isLocalDisconnecting = false;
 	private hotSwapOperationQueue: Array<HotSwapQueuedOperation> = [];
@@ -425,6 +426,7 @@ class VoiceEngineV2AppConnectionHostAdapter extends Store {
 		const guildId = raw.guild_id ?? null;
 		const endpoint = raw.endpoint ?? null;
 		const token = raw.token ?? null;
+		if (token) this.latestVoiceToken = token;
 		const connectionId = raw.connection_id ?? null;
 		const incomingChannelId = raw.channel_id ?? null;
 		const attemptId = decision.attemptId;

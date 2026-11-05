@@ -1,0 +1,12 @@
+{
+	"name": "fluxer_truco",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"start": "node src/server.mjs",
+		"test": "node --test --test-force-exit 'src/*.test.mjs'"
+	},
+	"dependencies": {
+		"ws": "8.18.3"
+	}
+}

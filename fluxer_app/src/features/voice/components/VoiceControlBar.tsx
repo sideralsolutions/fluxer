@@ -37,6 +37,7 @@ import {
 import {SOUNDBOARD_DESCRIPTOR, SoundboardMenu} from '@app/features/voice/components/SoundboardMenu';
 import {getStreamKey} from '@app/features/voice/components/StreamKeys';
 import {StreamSettingsMenuContent} from '@app/features/voice/components/StreamSettingsMenuContent';
+import {openTrucoModal, TRUCO_DESCRIPTOR} from '@app/features/voice/components/TrucoModal';
 import styles from '@app/features/voice/components/VoiceControlBar.module.css';
 import {
 	transitionVoiceControlBarState,
@@ -96,6 +97,7 @@ import {useMaybeRoomContext} from '@livekit/components-react';
 import {
 	CameraIcon,
 	CameraSlashIcon,
+	CardsIcon,
 	CaretDownIcon,
 	DotsThreeIcon,
 	EyeSlashIcon,
@@ -799,6 +801,33 @@ const VoiceControlBarInner = observer(function VoiceControlBarInner() {
 					</FocusRing>
 				</Tooltip>
 			</div>
+			{isConnected && (
+				<div
+					className={styles.buttonContainer}
+					data-flx="voice.voice-control-bar.voice-control-bar-inner.button-container.truco"
+				>
+					<Tooltip
+						text={i18n._(TRUCO_DESCRIPTOR)}
+						data-flx="voice.voice-control-bar.voice-control-bar-inner.tooltip.truco"
+					>
+						<FocusRing offset={-2} data-flx="voice.voice-control-bar.voice-control-bar-inner.focus-ring.truco">
+							<button
+								type="button"
+								className={clsx(styles.button, styles.buttonUnmuted)}
+								onClick={openTrucoModal}
+								aria-label={i18n._(TRUCO_DESCRIPTOR)}
+								data-flx="voice.voice-control-bar.voice-control-bar-inner.button.truco"
+							>
+								<CardsIcon
+									weight="fill"
+									className={styles.icon}
+									data-flx="voice.voice-control-bar.voice-control-bar-inner.icon.truco"
+								/>
+							</button>
+						</FocusRing>
+					</Tooltip>
+				</div>
+			)}
 			{isConnected && (
 				<div
 					className={styles.buttonContainer}

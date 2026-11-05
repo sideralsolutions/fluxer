@@ -44249,3 +44249,168 @@ msgstr "Não foi possível alterar este favorito. Tente novamente em instantes."
 #: src/features/voice/components/SoundSearchModal.tsx
 msgid "Your sound library is full. Remove a sound first."
 msgstr "Sua biblioteca de sons está cheia. Remova um som primeiro."
+
+#. Label of the voice call button that opens the truco card game. Truco is the name of a card game.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Play truco"
+msgstr "Jogar truco"
+
+#. Shown while the truco game connects to its server.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Connecting to the table…"
+msgstr "Conectando à mesa…"
+
+#. Shown when the truco game cannot start because the voice call is peer-to-peer.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Truco is not available in peer-to-peer calls"
+msgstr "O truco não está disponível em chamadas ponto a ponto"
+
+#. Shown when the connection to the truco server drops.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Connection lost. Trying again…"
+msgstr "Conexão perdida. Tentando de novo…"
+
+#. Truco table size: two teams of two players.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "2 vs 2"
+msgstr "2 contra 2"
+
+#. Truco table size: two teams of three players.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "3 vs 3"
+msgstr "3 contra 3"
+
+#. Truco team name. {team} is 1 or 2.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Team {team}"
+msgstr "Time {team}"
+
+#. Button that takes an empty seat at the truco table.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Sit here"
+msgstr "Sentar aqui"
+
+#. Button that leaves a seat at the truco table.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Leave seat"
+msgstr "Sair do lugar"
+
+#. Button that starts a truco game.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Start game"
+msgstr "Começar partida"
+
+#. Hint in the truco lobby explaining what happens to empty seats.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Bots fill the empty seats."
+msgstr "Bots completam os lugares vazios."
+
+#. Button that ends the running truco game for everyone.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "End game"
+msgstr "Encerrar partida"
+
+#. Result of the last truco game. {team} is 1 or 2, the others are final scores.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Team {team} won {winner} to {loser}"
+msgstr "O time {team} ganhou por {winner} a {loser}"
+
+#. Truco status when the user must play.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Your turn"
+msgstr "Sua vez"
+
+#. Truco status while another player must act.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Waiting for {name}"
+msgstr "Aguardando {name}"
+
+#. How many points the current truco hand is worth.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Hand worth {value}"
+msgstr "Mão valendo {value}"
+
+#. Truco status when a player raises the hand. {value} is the points being asked.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "{name} called {value}"
+msgstr "{name} pediu {value}"
+
+#. Truco call that raises the hand to 3 points.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Truco!"
+msgstr "Truco!"
+
+#. Truco call that raises the hand to 6 points.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Six!"
+msgstr "Seis!"
+
+#. Truco call that raises the hand to 9 points.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Nine!"
+msgstr "Nove!"
+
+#. Truco call that raises the hand to 12 points.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Twelve!"
+msgstr "Doze!"
+
+#. Truco answer that accepts the raise.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Accept raise"
+msgstr "Aceitar"
+
+#. Truco answer that gives up the hand.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Fold hand"
+msgstr "Correr"
+
+#. Truco question for the team that has 11 points.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Hand of eleven: play for 3 points or fold and give 1?"
+msgstr "Mão de onze: jogar valendo 3 ou correr e entregar 1 ponto?"
+
+#. Truco answer that plays the hand of eleven.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Play the hand"
+msgstr "Jogar a mão"
+
+#. Truco status while the team with 11 points decides.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Team {team} is deciding the hand of eleven"
+msgstr "O time {team} está decidindo a mão de onze"
+
+#. Truco status when both teams have 11 points and nobody can see their cards.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Iron hand: everyone plays blind"
+msgstr "Mão de ferro: todo mundo joga no escuro"
+
+#. Truco toggle: the next card is played hidden and loses to any other card.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Play face down"
+msgstr "Jogar encoberta"
+
+#. Truco status at the end of a hand.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Team {team} scored {points}"
+msgstr "O time {team} fez {points}"
+
+#. Truco status for someone without a seat in the running game.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "You are watching. Take the seat of a bot to play."
+msgstr "Você está assistindo. Pegue o lugar de um bot para jogar."
+
+#. Button that replaces a truco bot in the running game.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Take this seat"
+msgstr "Pegar este lugar"
+
+#. The face-up truco card that defines the trump rank. Keep the Portuguese word.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Vira"
+msgstr "Vira"
+
+#. Label before the cards of the partner, shown in the truco hand of eleven.
+#: src/features/voice/components/TrucoModal.tsx
+msgid "Partner:"
+msgstr "Parceiro:"
